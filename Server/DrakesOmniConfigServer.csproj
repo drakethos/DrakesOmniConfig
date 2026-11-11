@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">$(MSBuildProjectDirectory)\</SolutionDir>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{56B541EF-91FC-4099-A7EC-205FA7E4A3ED}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExPath)\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+
+  <!--
+    Shared engine source — same physical files as ..\DrakesOmniConfig.csproj, compiled a SECOND time into
+    this assembly (no ProjectReference: that would make this build depend on DrakesOmniConfig.dll at
+    runtime, which defeats "standalone"). Everything stays internal; no InternalsVisibleTo needed.
+    IMPORTANT: when a new file is added to the baseline's Config/Engine/Sync source, add it here too —
+    nothing enforces that automatically with this old-style (non-SDK) csproj.
+  -->
+  <ItemGroup>
+    <Compile Include="..\src\Config\Settings\MainConfig.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\ModletManifest.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\TargetSelector.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\FieldValueExpression.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\ModletOverride.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\Modlet.cs" />
+    <Compile Include="..\src\Config\Modlets\Schema\ResolvedOverride.cs" />
+    <Compile Include="..\src\Config\Modlets\Loading\ModletLoader.cs" />
+    <Compile Include="..\src\Config\Modlets\Management\ModletManager.cs" />
+    <Compile Include="..\src\Config\Modlets\Management\ConflictResolver.cs" />
+
+    <Compile Include="..\src\Engine\Orchestration\ModletOrchestrator.cs" />
+    <Compile Include="..\src\Engine\Hooks\PrefabPassHook.cs" />
+    <Compile Include="..\src\Engine\Hooks\GlobalRebindHook.cs" />
+    <Compile Include="..\src\Engine\Fields\Accessors\IFieldAccessor.cs" />
+    <Compile Include="..\src\Engine\Fields\Accessors\Reflected\ReflectedFieldAccessor.cs" />
+    <Compile Include="..\src\Engine\Fields\Accessors\Virtual\VirtualFieldAccessorBase.cs" />
+    <Compile Include="..\src\Engine\Fields\Accessors\Virtual\FallDamageAccessor.cs" />
+    <Compile Include="..\src\Engine\Fields\Registry\FieldRegistry.cs" />
+    <Compile Include="..\src\Engine\Fields\Application\FieldPatcher.cs" />
+    <Compile Include="..\src\Engine\Node\Node.cs" />
+    <Compile Include="..\src\Engine\Node\NodeLoader.cs" />
+    <Compile Include="..\src\Engine\DynamicPatcher\HarmonyHookGen.cs" />
+
+    <Compile Include="..\src\Sync\Transport\ModletChannel.cs" />
+    <Compile Include="..\src\Sync\Authority\ModletAuthority.cs" />
+  </ItemGroup>
+
+  <!-- Server-exclusive source — never compiled into the baseline DrakesOmniConfig assembly. -->
+  <ItemGroup>
+    <Compile Include="src\DrakesOmniConfigServer.cs" />
+    <Compile Include="src\Tools\ConsoleCommands\OmniConfigConsoleCommands.cs" />
+    <Compile Include="src\Tools\HtmlHelper\HtmlHelperServer.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="README.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="CHANGELOG.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="icon.png" Condition="Exists('icon.png')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="PackageMod" AfterTargets="Build" DependsOnTargets="ResolveThunderstorePaths;WriteThunderstoreManifest" Condition="'$(SkipPackageMod)' != 'true'">
+    <!-- Gale/r2modman keep folder structure only under plugins/ (patchers/ monomod/ core/ config/): DLL lives there; manifest.json, icon.png, README.md and CHANGELOG.md sit at the zip root. -->
+    <MakeDir Directories="$(ThunderstoreFolder)\plugins" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(ThunderstoreFolder)\plugins" />
+    <Copy SourceFiles="$(TargetDir)README.md" DestinationFiles="$(ThunderstoreFolder)\README.md" Condition="Exists('$(TargetDir)README.md')" />
+    <Copy SourceFiles="$(TargetDir)CHANGELOG.md" DestinationFiles="$(ThunderstoreFolder)\CHANGELOG.md" Condition="Exists('$(TargetDir)CHANGELOG.md')" />
+    <Copy SourceFiles="$(TargetDir)icon.png" DestinationFiles="$(ThunderstoreFolder)\icon.png" Condition="Exists('$(TargetDir)icon.png')" />
+    <Exec Command="powershell -Command Compress-Archive -Path '$(ThunderstoreFolder)\*' -DestinationPath '$(ZipOutput)' -Force" Condition="'$(CI_SKIP_POST_BUILD)' == ''" />
+  </Target>
+</Project>

@@ -48,8 +48,35 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DrakesOmniConfig.cs" />
+    <Compile Include="src\DrakesOmniConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+
+    <Compile Include="src\Config\Settings\MainConfig.cs" />
+    <Compile Include="src\Config\Modlets\Schema\ModletManifest.cs" />
+    <Compile Include="src\Config\Modlets\Schema\TargetSelector.cs" />
+    <Compile Include="src\Config\Modlets\Schema\FieldValueExpression.cs" />
+    <Compile Include="src\Config\Modlets\Schema\ModletOverride.cs" />
+    <Compile Include="src\Config\Modlets\Schema\Modlet.cs" />
+    <Compile Include="src\Config\Modlets\Schema\ResolvedOverride.cs" />
+    <Compile Include="src\Config\Modlets\Loading\ModletLoader.cs" />
+    <Compile Include="src\Config\Modlets\Management\ModletManager.cs" />
+    <Compile Include="src\Config\Modlets\Management\ConflictResolver.cs" />
+
+    <Compile Include="src\Engine\Orchestration\ModletOrchestrator.cs" />
+    <Compile Include="src\Engine\Hooks\PrefabPassHook.cs" />
+    <Compile Include="src\Engine\Hooks\GlobalRebindHook.cs" />
+    <Compile Include="src\Engine\Fields\Accessors\IFieldAccessor.cs" />
+    <Compile Include="src\Engine\Fields\Accessors\Reflected\ReflectedFieldAccessor.cs" />
+    <Compile Include="src\Engine\Fields\Accessors\Virtual\VirtualFieldAccessorBase.cs" />
+    <Compile Include="src\Engine\Fields\Accessors\Virtual\FallDamageAccessor.cs" />
+    <Compile Include="src\Engine\Fields\Registry\FieldRegistry.cs" />
+    <Compile Include="src\Engine\Fields\Application\FieldPatcher.cs" />
+    <Compile Include="src\Engine\Node\Node.cs" />
+    <Compile Include="src\Engine\Node\NodeLoader.cs" />
+    <Compile Include="src\Engine\DynamicPatcher\HarmonyHookGen.cs" />
+
+    <Compile Include="src\Sync\Transport\ModletChannel.cs" />
+    <Compile Include="src\Sync\Authority\ModletAuthority.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

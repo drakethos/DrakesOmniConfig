@@ -1,0 +1,220 @@
+name: Release (Server)
+
+# Hexium only (no Thunderstore). Push a tag to release the Server build specifically:
+#   Stable: server-v0.1.0          -> Hexium + GitHub release
+#   Beta:   server-v0.1.0-beta.1   -> Hexium + GitHub prerelease
+# Separate tag prefix from the baseline's release.yml (plain v*.*.*) so either build can ship on its
+# own, or both at once by pushing both tags. The tag must match <Version> in Server/mod.package.props,
+# and Server/CHANGELOG.md needs a "## <version>" section.
+
+on:
+  push:
+    tags:
+      - "server-v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+      is_prerelease: ${{ steps.ver.outputs.is_prerelease }}
+      zip: ${{ steps.pkg.outputs.zip }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TAG_VERSION="${TAG#server-v}"
+
+          if [[ "$TAG" =~ ^server-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            IS_PRERELEASE=false
+          elif [[ "$TAG" =~ ^server-v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$ ]]; then
+            IS_PRERELEASE=true
+          else
+            echo "::error::Tag ${TAG} must be server-vX.Y.Z (stable) or server-vX.Y.Z-beta.N / -alpha.N / -rc.N (prerelease)." >&2
+            exit 1
+          fi
+
+          PKG_VERSION=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' Server/mod.package.props | head -1 | xargs)
+          if [ -z "$PKG_VERSION" ]; then
+            echo "::error::Could not read <Version> from Server/mod.package.props" >&2
+            exit 1
+          fi
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag ${TAG} (${TAG_VERSION}) does not match Server/mod.package.props (${PKG_VERSION}). Tag server-v${PKG_VERSION} or update <Version>." >&2
+            exit 1
+          fi
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "Release version: $PKG_VERSION (prerelease=$IS_PRERELEASE)"
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore NuGet packages
+        run: |
+          nuget restore Server/DrakesOmniConfigServer.csproj -PackagesDirectory Server/packages
+
+      - name: Stage game DLLs from Pfhoenix package
+        run: |
+          PFHOENIX_LIB=$(ls -d Server/packages/Pfhoenix.Valheim.ModProjectReferences.*/lib/net46 2>/dev/null | head -1)
+          if [ -z "$PFHOENIX_LIB" ]; then
+            echo "ERROR: Pfhoenix package not found" >&2; ls Server/packages/ >&2; exit 1
+          fi
+          echo "Pfhoenix lib: $PFHOENIX_LIB"
+
+          MANAGED="ci_valheim/valheim_Data/Managed"
+          PUBLICIZED="$MANAGED/publicized_assemblies"
+          BEPINEX="ci_valheim/BepInEx/core"
+          mkdir -p "$MANAGED" "$PUBLICIZED" "$BEPINEX"
+
+          cp "$PFHOENIX_LIB/"*.dll "$MANAGED/"
+
+          cp "$PFHOENIX_LIB/assembly_valheim.dll" "$PUBLICIZED/assembly_valheim_publicized.dll"
+          cp "$PFHOENIX_LIB/assembly_utils.dll"   "$PUBLICIZED/assembly_utils_publicized.dll"
+          cp "$PFHOENIX_LIB/gui_framework.dll"    "$PUBLICIZED/gui_framework_publicized.dll"
+
+          for src in assembly_googleanalytics assembly_guiutils assembly_lux \
+                     assembly_postprocessing assembly_simplemeshcombine \
+                     assembly_sunshafts SoftReferenceableAssets; do
+            [ -f "$PFHOENIX_LIB/$src.dll" ] && \
+              cp "$PFHOENIX_LIB/$src.dll" "$PUBLICIZED/${src}_publicized.dll" || true
+          done
+
+          cp "$PFHOENIX_LIB/0Harmony.dll" "$BEPINEX/"
+          cp "$PFHOENIX_LIB/bepinex.dll"  "$BEPINEX/BepInEx.dll"
+
+          echo "VALHEIM_INSTALL=$(pwd)/ci_valheim" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          CI_NET48_FWPATH: ${{ github.workspace }}/Server/packages/Microsoft.NETFramework.ReferenceAssemblies.net48.1.0.3/build
+          CI_SKIP_POST_BUILD: "true"
+        run: |
+          CI_ROOT="$(pwd)/ci_valheim"
+          MANAGED="$CI_ROOT/valheim_Data/Managed"
+          dotnet msbuild Server/DrakesOmniConfigServer.csproj \
+            /p:Configuration=Release \
+            /p:TargetFrameworkVersion=v4.8 \
+            /p:BepInExPath="$CI_ROOT/BepInEx" \
+            /p:CorlibPath="$MANAGED" \
+            /p:PublicizedAssembliesPath="$MANAGED/publicized_assemblies" \
+            /p:Version="${{ steps.ver.outputs.version }}" \
+            /t:Build \
+            /v:minimal
+
+      - name: Assemble package
+        id: pkg
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          PKG_DIR="DrakeMods-DrakesOmniConfigServer-${VERSION}"
+          ZIP_NAME="DrakeMods-DrakesOmniConfigServer-${VERSION}.zip"
+
+          mkdir -p "$PKG_DIR"
+          cp Server/bin/Release/DrakesOmniConfigServer.dll "$PKG_DIR/"
+          cp Server/README.md                             "$PKG_DIR/"
+          cp Server/icon.png                              "$PKG_DIR/" 2>/dev/null || true
+          cp Server/CHANGELOG.md                          "$PKG_DIR/"
+
+          dotnet msbuild Server/DrakesOmniConfigServer.csproj \
+            /p:Version="$VERSION" \
+            /p:ThunderstoreManifestDir="$(pwd)/$PKG_DIR" \
+            /t:WriteThunderstoreManifest \
+            /v:minimal
+
+          cd "$PKG_DIR" && zip -r "../$ZIP_NAME" . && cd ..
+
+          echo "zip=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          ls -lh "$ZIP_NAME"
+
+      - name: Write release notes
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.ver.outputs.is_prerelease }}
+          REPO: ${{ github.repository }}
+        run: |
+          SECTION=$(awk -v v="## ${VERSION}" '
+            $0 == v { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' Server/CHANGELOG.md | sed -e 's/^###/##/')
+          if [ -z "$(printf '%s' "$SECTION" | tr -d '[:space:]')" ]; then
+            echo "::error::Server/CHANGELOG.md has no '## ${VERSION}' section (or it is empty)." >&2
+            exit 1
+          fi
+          {
+            if [ "$IS_PRERELEASE" = "true" ]; then
+              echo "> **Beta build.** Back up your worlds, and please [report bugs](https://github.com/${REPO}/issues) with your \`BepInEx/LogOutput.log\`."
+              echo
+            fi
+            printf '%s\n' "$SECTION"
+            echo
+            echo "## Install"
+            echo "- **Hexium:** https://valheim.hexium.gg/mods/DrakeMods/DrakesOmniConfigServer"
+            echo "- **Zip below:** use your mod manager's \"Import local mod\" (Gale, r2modman), or extract into \`BepInEx/plugins/DrakeMods-DrakesOmniConfigServer/\`."
+            echo "- Standalone — do not install alongside DrakesOmniConfig."
+            echo
+            echo "---"
+            echo "Full history: [CHANGELOG.md](https://github.com/${REPO}/blob/${TAG}/Server/CHANGELOG.md) | [README](https://github.com/${REPO}/blob/${TAG}/Server/README.md)"
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "DrakesOmniConfigServer ${{ steps.ver.outputs.version }}${{ steps.ver.outputs.is_prerelease == 'true' && ' (beta)' || '' }}"
+          prerelease: ${{ steps.ver.outputs.is_prerelease == 'true' }}
+          body_path: release-notes.md
+          files: ${{ steps.pkg.outputs.zip }}
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-zip-server
+          path: ${{ steps.pkg.outputs.zip }}
+          if-no-files-found: error
+
+  publish-hexium:
+    needs: build-and-release
+    # Kill switch: repo variable HEXIUM_PUBLISH=false skips the upload (GitHub release still made).
+    if: vars.HEXIUM_PUBLISH != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout publish script
+        uses: actions/checkout@v4
+
+      - name: Download package zip
+        uses: actions/download-artifact@v4
+        with:
+          name: package-zip-server
+          path: dist
+
+      - name: Publish package to Hexium
+        env:
+          HEXIUM_TOKEN: ${{ secrets.HEXIUM_TOKEN }}
+          ZIP_NAME: ${{ needs.build-and-release.outputs.zip }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HEXIUM_TOKEN}" ]; then
+            echo "::error::HEXIUM_TOKEN secret is not set" >&2
+            exit 1
+          fi
+          python3 .github/scripts/publish-hexium.py \
+            --file "dist/${ZIP_NAME}" \
+            --repository "https://valheim.hexium.gg" \
+            --namespace "DrakeMods" \
+            --communities "valheim" \
+            --categories "Utility,Server-side,Valheim 1.0"
