@@ -1,0 +1,21 @@
+# Scope.Global — GlobalRebindHook (Player.Awake Postfix), not PrefabPassHook. itemId is unused by
+# GlobalRebindHook today (it matches on TypeName alone via player.GetComponent(TypeName)) but set here
+# for schema consistency.
+overrides:
+  - target:
+      typeName: Player
+      scope: Global
+      kind: Item
+      itemId: Player
+    fields:
+      m_jumpForce: "*1.5"
+      # Verified against the real GameDataManifest.json (2026-11-15) — m_maxHealth/m_maxStamina do NOT
+      # exist on Player; the ORIGINAL guess here threw a MissingFieldException inside this very
+      # Player.Awake Postfix on every launch, which (before PrefabPassHook/GlobalRebindHook got
+      # per-override try/catch) aborted the rest of this override pass silently. Real base-stat fields
+      # are m_baseHP/m_baseStamina (same ones com.drakemods.drake's test modlet already uses correctly).
+      m_baseHP: "=50"
+      m_baseStamina: "=50"
+      # Current health/stamina are SEPARATE fields from max — changing base alone may show a half-full
+      # bar on a fresh character (current still at the old default) rather than a full one at 50. Not a
+      # bug if so; that's current vs. max, same as leveling up in vanilla.

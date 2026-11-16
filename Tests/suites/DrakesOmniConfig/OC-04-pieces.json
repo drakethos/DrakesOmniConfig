@@ -1,0 +1,23 @@
+{
+  "name": "OC-04 pieces: cart/ship/chest/fire overrides resolved, each a different Unity component shape",
+  "description": "Every field checked here is an absolute Set ('=' or plain true/false text), so every expectation is exact — no vanilla-baseline guessing needed for pieces, unlike the relative-multiplier weapon/armor fields.",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Cart", "component": "Vagon", "field": "m_playerExtraPullMass" }, "expect": 50, "label": "Cart Vagon.m_playerExtraPullMass" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Cart", "component": "WearNTear", "field": "m_health" }, "expect": 1000, "label": "Cart WearNTear.m_health" },
+
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Karve", "component": "Ship", "field": "m_waterImpactDamage" }, "expect": 0, "label": "Karve Ship.m_waterImpactDamage" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "VikingShip", "component": "Ship", "field": "m_waterImpactDamage" }, "expect": 0, "label": "VikingShip Ship.m_waterImpactDamage" },
+
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "piece_chest", "component": "Container", "field": "m_width" }, "expect": 6, "label": "piece_chest Container.m_width" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "piece_chest", "component": "Container", "field": "m_height" }, "expect": 4, "label": "piece_chest Container.m_height" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "piece_chest", "component": "Container", "field": "m_checkGuardStone" }, "expect": false, "label": "piece_chest Container.m_checkGuardStone" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "piece_chest", "component": "WearNTear", "field": "m_health" }, "expect": 1000, "label": "piece_chest WearNTear.m_health" },
+
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "fire_pit", "component": "Fireplace", "field": "m_infiniteFuel" }, "expect": true, "label": "fire_pit Fireplace.m_infiniteFuel" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "fire_pit", "component": "Fireplace", "field": "m_startFuel" }, "expect": 0, "label": "fire_pit Fireplace.m_startFuel" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "hearth", "component": "Fireplace", "field": "m_startFuel" }, "expect": 0, "label": "hearth Fireplace.m_startFuel" }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "DrakesOmniConfig" }
+  ]
+}

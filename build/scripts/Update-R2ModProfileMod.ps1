@@ -129,42 +129,58 @@ if ($parent -and -not (Test-Path -LiteralPath $parent)) {
     New-Item -ItemType Directory -Path $parent -Force | Out-Null
 }
 
-$existing = ''
-if (Test-Path -LiteralPath $ModsYmlPath) {
-    $existing = [IO.File]::ReadAllText($ModsYmlPath)
-}
-
+# Read-modify-write, retried: two builds sharing one profile (e.g. the baseline and Server projects
+# both deploying to the same drakeTest profile) can race on this exact file. A transient sharing
+# violation here shouldn't hard-fail the build.
 $blockPattern = '(?ms)^- manifestVersion:.*?(?=\r?\n- manifestVersion:|\z)'
-$blocks = @()
-if ([string]::IsNullOrWhiteSpace($existing)) {
-    $blocks = @()
-}
-else {
-    $blocks = [regex]::Matches($existing.TrimEnd(), $blockPattern) |
-        ForEach-Object { $_.Value.TrimEnd() }
-}
-
-$updated = $false
-$outBlocks = [System.Collections.Generic.List[string]]::new()
-foreach ($block in $blocks) {
-    if ($block -match '(?m)^\s+name:\s+(.+?)\s*$') {
-        $entryName = $Matches[1].Trim()
-        if ($entryName -eq $fullName) {
-            $outBlocks.Add($newBlock)
-            $updated = $true
-            continue
+$maxAttempts = 5
+$attempt = 0
+$action = 'Added'
+while ($true) {
+    $attempt++
+    try {
+        $existing = ''
+        if (Test-Path -LiteralPath $ModsYmlPath) {
+            $existing = [IO.File]::ReadAllText($ModsYmlPath)
         }
+
+        $blocks = @()
+        if (-not [string]::IsNullOrWhiteSpace($existing)) {
+            $blocks = [regex]::Matches($existing.TrimEnd(), $blockPattern) |
+                ForEach-Object { $_.Value.TrimEnd() }
+        }
+
+        $updated = $false
+        $outBlocks = [System.Collections.Generic.List[string]]::new()
+        foreach ($block in $blocks) {
+            if ($block -match '(?m)^\s+name:\s+(.+?)\s*$') {
+                $entryName = $Matches[1].Trim()
+                if ($entryName -eq $fullName) {
+                    $outBlocks.Add($newBlock)
+                    $updated = $true
+                    continue
+                }
+            }
+            $outBlocks.Add($block)
+        }
+
+        if (-not $updated) {
+            $outBlocks.Add($newBlock)
+        }
+
+        $content = ($outBlocks -join [Environment]::NewLine) + [Environment]::NewLine
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [IO.File]::WriteAllText($ModsYmlPath, $content, $utf8NoBom)
+
+        $action = if ($updated) { 'Updated' } else { 'Added' }
+        break
     }
-    $outBlocks.Add($block)
+    catch [System.IO.IOException] {
+        if ($attempt -ge $maxAttempts) {
+            throw
+        }
+        Start-Sleep -Milliseconds (150 * $attempt)
+    }
 }
 
-if (-not $updated) {
-    $outBlocks.Add($newBlock)
-}
-
-$content = ($outBlocks -join [Environment]::NewLine) + [Environment]::NewLine
-$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-[IO.File]::WriteAllText($ModsYmlPath, $content, $utf8NoBom)
-
-$action = if ($updated) { 'Updated' } else { 'Added' }
 Write-Host "$action mods.yml entry: $fullName ($Version)"

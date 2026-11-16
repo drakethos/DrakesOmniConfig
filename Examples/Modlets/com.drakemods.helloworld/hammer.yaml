@@ -1,0 +1,15 @@
+# Phase A target shape — not read by a real YAML parser yet (Phase A hardcodes/reads this file as
+# plain text; Phase B swaps in YamlDotNet and parses this for real). Written as real YAML now so
+# nothing has to change shape later.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: Item
+      itemId: Hammer
+    fields:
+      # NESTED path: ItemDrop.m_itemData.m_shared.m_name (three hops). ReflectedFieldAccessor as
+      # stubbed only models ONE flat field name on a resolved type right now — decide whether to
+      # support a dotted path for Phase A, or point this fixture at a flatter field instead
+      # (e.g. a Humanoid stat) and save the name-change proof for once dotted paths exist.
+      m_itemData.m_shared.m_name: HelloWorld

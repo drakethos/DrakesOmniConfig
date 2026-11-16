@@ -1,0 +1,9 @@
+# Higher priority (10) than com.drakemods.conflict-low (0) — this value should win on the Hammer's weight.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: Item
+      itemId: Hammer
+    fields:
+      m_itemData.m_shared.m_weight: "=5.0"

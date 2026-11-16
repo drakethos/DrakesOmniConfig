@@ -1,0 +1,21 @@
+# Exercises: {var} substitution, Multiply ("*"), and Add-percentage ("+N%").
+# Field names here are my best understanding of Valheim's SharedData layout — if one doesn't resolve,
+# ReflectedFieldAccessor throws a MissingFieldException naming exactly which segment/type was wrong,
+# which is the fastest way to find the real name (check against a decompiled assembly or another mod).
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: Item
+      itemId: SwordBronze
+    fields:
+      m_itemData.m_shared.m_weight: "*{weightMultiplier}"
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: Item
+      itemId: AxeBronze
+    fields:
+      m_itemData.m_shared.m_weight: "*{weightMultiplier}"
+      m_itemData.m_shared.m_value: "+50%"

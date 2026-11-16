@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DrakesOmniConfig — Config Builder</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #1e1e22; color: #ddd; }
+  header { padding: 12px 16px; background: #141417; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header input[type=file] { color: #ddd; }
+  #status { font-size: 13px; color: #9a9; }
+  main { display: grid; grid-template-columns: 280px 280px 1fr; gap: 1px; background: #333; height: calc(100vh - 53px); }
+  section { background: #1e1e22; overflow-y: auto; padding: 10px; }
+  section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 0 0 8px; }
+  input[type=text] { width: 100%; padding: 6px 8px; margin-bottom: 8px; background: #141417; border: 1px solid #333; color: #ddd; border-radius: 4px; }
+  .list-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .list-item:hover { background: #2a2a30; }
+  .list-item.active { background: #35506b; }
+  .chip { display: inline-block; padding: 3px 8px; margin: 2px; border-radius: 10px; background: #2a2a30; font-size: 12px; cursor: pointer; }
+  .chip:hover, .chip.active { background: #35506b; }
+  .field-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+  .field-row:hover { background: #2a2a30; }
+  .field-type { color: #7bb; }
+  .breadcrumb { font-size: 12px; color: #999; margin-bottom: 8px; word-break: break-all; }
+  .breadcrumb b { color: #ddd; }
+  .panel { border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 12px; background: #202024; }
+  .panel label { display: block; font-size: 11px; color: #999; margin: 6px 0 2px; }
+  .panel select, .panel input[type=text], .panel input[type=number] { width: 100%; padding: 5px; background: #141417; border: 1px solid #333; color: #ddd; border-radius: 4px; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  button { padding: 7px 12px; border: none; border-radius: 4px; background: #35506b; color: #fff; cursor: pointer; font-size: 12px; }
+  button:hover { background: #40607f; }
+  button.secondary { background: #333; }
+  button.secondary:hover { background: #444; }
+  button:disabled { opacity: .4; cursor: default; }
+  textarea { width: 100%; height: 160px; background: #141417; color: #ddd; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: Consolas, monospace; font-size: 12px; }
+  .override-item { background: #202024; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .override-item code { color: #cf9; }
+  .muted { color: #777; font-size: 12px; }
+  label.checkbox { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #ccc; margin: 6px 0; }
+  label.checkbox input { width: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DrakesOmniConfig — Config Builder</h1>
+  <input type="file" id="manifestInput" accept="application/json">
+  <span id="status">No manifest loaded. Load GameDataManifest.json from BepInEx/config/DrakesOmniConfig/.</span>
+</header>
+
+<main>
+  <section id="prefabPane">
+    <h2>Prefabs</h2>
+    <input type="text" id="prefabFilter" placeholder="Filter, e.g. Bronze">
+    <div id="prefabList"></div>
+  </section>
+
+  <section id="fieldPane">
+    <h2>Fields</h2>
+    <div class="breadcrumb" id="breadcrumb">Pick a prefab, then a component.</div>
+    <div id="componentChips"></div>
+    <div id="fieldList"></div>
+  </section>
+
+  <section id="builderPane">
+    <h2>Build an override</h2>
+    <div class="panel">
+      <label>Selected field path</label>
+      <input type="text" id="fieldPath" placeholder="Click a field on the left, or type one manually">
+
+      <div class="row">
+        <div>
+          <label>Type name</label>
+          <input type="text" id="typeName" placeholder="e.g. ItemDrop">
+        </div>
+        <div>
+          <label>Scope</label>
+          <select id="scope"><option value="Prefab">Prefab</option><option value="Global">Global</option></select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Kind</label>
+          <select id="kind">
+            <option value="Item">Item (exact id)</option>
+            <option value="NamePattern">NamePattern (wildcard)</option>
+          </select>
+        </div>
+        <div>
+          <label id="itemIdLabel">Item id</label>
+          <input type="text" id="itemId" placeholder="e.g. Hammer or *Bronze">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Operator</label>
+          <select id="operator">
+            <option value="=">= (Set)</option>
+            <option value="+">+ (Add)</option>
+            <option value="-">- (Subtract)</option>
+            <option value="*">* (Multiply)</option>
+            <option value="/">/ (Divide)</option>
+          </select>
+        </div>
+        <div>
+          <label>Value</label>
+          <div id="valueContainer"><input type="text" id="value" placeholder="e.g. 1.5 or HelloWorld"></div>
+        </div>
+      </div>
+      <div class="muted" id="valueHint"></div>
+      <label class="checkbox"><input type="checkbox" id="percentage"> Treat as percentage (only Add/Subtract)</label>
+
+      <button id="addOverride">Add override</button>
+    </div>
+
+    <h2>Overrides in this modlet</h2>
+    <div id="overrideList"><p class="muted">None added yet.</p></div>
+
+    <div class="panel">
+      <label>Modlet id (folder name)</label>
+      <input type="text" id="modletId" placeholder="e.g. com.yourname.yourpack">
+      <label>Display name</label>
+      <input type="text" id="displayName" placeholder="e.g. My Tweaks">
+      <div class="row">
+        <div><label>Priority</label><input type="number" id="priority" value="0"></div>
+        <div style="display:flex;align-items:flex-end"><label class="checkbox"><input type="checkbox" id="enabled" checked> enabled</label></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="generate">Generate YAML</button>
+        <button class="secondary" id="downloadManifest" disabled>Download manifest.yaml</button>
+        <button class="secondary" id="downloadOverrides" disabled>Download overrides.yaml</button>
+      </div>
+    </div>
+
+    <h2>manifest.yaml</h2>
+    <textarea id="manifestYaml" readonly></textarea>
+    <h2>overrides.yaml</h2>
+    <textarea id="overridesYaml" readonly></textarea>
+  </section>
+</main>
+
+<script>
+// ---- State ----
+let manifest = null;       // parsed GameDataManifest.json
+let selectedPrefab = null; // prefab name string
+let pathStack = [];        // [{ typeName, fieldName, fieldType }] built while drilling into nested fields
+let overrides = [];        // built override objects for this session
+
+// ---- Manifest loading: try auto-load first (this tool deploys to
+// BepInEx/config/DrakesOmniConfig/ConfigBuilder/index.html, right next to
+// BepInEx/config/DrakesOmniConfig/GameDataManifest.json one level up), fall back to the manual file
+// picker when that's not possible. ----
+function applyManifestText(text, sourceDescription) {
+  try {
+    manifest = JSON.parse(text);
+    document.getElementById('status').textContent =
+      `Loaded (${sourceDescription}): ${manifest.prefabs.length} prefabs, ${Object.keys(manifest.types).length} types (generated ${manifest.generatedAt}).`;
+    renderPrefabList();
+  } catch (err) {
+    document.getElementById('status').textContent = 'Could not parse that file as JSON: ' + err.message;
+  }
+}
+
+document.getElementById('manifestInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function () { applyManifestText(reader.result, 'manually loaded'); };
+  reader.readAsText(file);
+});
+
+// Most browsers (Chrome, Edge) block fetch() against file:// origins as a security measure — each
+// local file is treated as its own unique origin, so a sibling file can't be read this way. Firefox is
+// more lenient. Either way this fails silently and falls back to the manual picker above; that's
+// expected behavior for a local file:// page, not a bug.
+(function tryAutoLoad() {
+  if (typeof fetch !== 'function') return;
+  fetch('../GameDataManifest.json')
+    .then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status)))
+    .then(text => applyManifestText(text, 'auto-loaded'))
+    .catch(() => {
+      document.getElementById('status').textContent =
+        'Auto-load blocked (normal for a local file:// page in this browser) — pick GameDataManifest.json manually above.';
+    });
+})();
+
+// ---- Prefab list ----
+document.getElementById('prefabFilter').addEventListener('input', renderPrefabList);
+
+function renderPrefabList() {
+  const container = document.getElementById('prefabList');
+  container.innerHTML = '';
+  if (!manifest) return;
+  const filter = document.getElementById('prefabFilter').value.toLowerCase();
+  manifest.prefabs
+    .filter(p => p.name.toLowerCase().includes(filter))
+    .forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'list-item' + (p.name === selectedPrefab ? ' active' : '');
+      div.textContent = p.name;
+      div.onclick = () => selectPrefab(p);
+      container.appendChild(div);
+    });
+}
+
+function selectPrefab(prefab) {
+  selectedPrefab = prefab.name;
+  pathStack = [];
+  document.getElementById('itemId').value = prefab.name;
+  renderPrefabList();
+  renderComponentChips(prefab.components);
+  document.getElementById('fieldList').innerHTML = '';
+  updateBreadcrumb();
+}
+
+// ---- Components -> fields, with drill-down into nested non-primitive field types ----
+function renderComponentChips(components) {
+  const container = document.getElementById('componentChips');
+  container.innerHTML = '';
+  components.forEach(typeName => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = typeName;
+    chip.onclick = () => {
+      pathStack = [{ typeName: typeName, fieldName: null, fieldType: typeName }];
+      renderFieldsForCurrentPath();
+    };
+    container.appendChild(chip);
+  });
+}
+
+function renderFieldsForCurrentPath() {
+  updateBreadcrumb();
+  const top = pathStack[pathStack.length - 1];
+  const fields = (manifest.types && manifest.types[top.fieldType]) || [];
+  const container = document.getElementById('fieldList');
+  container.innerHTML = '';
+
+  if (fields.length === 0) {
+    container.innerHTML = '<p class="muted">No known fields for this type (or it wasn\'t scanned).</p>';
+    return;
+  }
+
+  fields.forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    const drillable = manifest.types && manifest.types[f.type];
+    row.innerHTML = `<span>${f.name}${drillable ? ' &rsaquo;' : ''}</span><span class="field-type">${f.type}</span>`;
+    row.onclick = () => {
+      if (drillable) {
+        pathStack.push({ typeName: f.type, fieldName: f.name, fieldType: f.type });
+        renderFieldsForCurrentPath();
+      } else {
+        selectLeafField(f);
+      }
+    };
+    container.appendChild(row);
+  });
+}
+
+function selectLeafField(field) {
+  const pathParts = pathStack.slice(1).map(p => p.fieldName).filter(Boolean);
+  pathParts.push(field.name);
+  document.getElementById('fieldPath').value = pathParts.join('.');
+  document.getElementById('typeName').value = pathStack[0].typeName;
+  renderValueControl(field.type);
+}
+
+// ---- Context-aware Value control: swaps the input based on the selected field's real CLR type, so
+// you get a checkbox for bool, a number field for numeric types, a dropdown for a known enum (real
+// member names, from the manifest's "enums" section — not guessed), and a plain text box for anything
+// else (String, or a type we didn't recognize — "default to string when we aren't sure"). ----
+const NUMERIC_TYPES = new Set(['Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64', 'Single', 'Double', 'Decimal']);
+
+function renderValueControl(fieldType) {
+  const container = document.getElementById('valueContainer');
+  const hint = document.getElementById('valueHint');
+  container.innerHTML = '';
+
+  let control;
+  if (fieldType === 'Boolean') {
+    control = document.createElement('select');
+    control.id = 'value';
+    control.innerHTML = '<option value="true">true</option><option value="false">false</option>';
+    hint.textContent = 'Boolean field.';
+  } else if (manifest && manifest.enums && manifest.enums[fieldType]) {
+    control = document.createElement('select');
+    control.id = 'value';
+    control.innerHTML = manifest.enums[fieldType].map(v => `<option value="${v}">${v}</option>`).join('');
+    hint.textContent = `Enum ${fieldType} — real values from the manifest.`;
+  } else if (NUMERIC_TYPES.has(fieldType)) {
+    control = document.createElement('input');
+    control.type = 'number';
+    control.step = 'any';
+    control.id = 'value';
+    control.placeholder = 'e.g. 1.5';
+    hint.textContent = `Numeric field (${fieldType}).`;
+  } else {
+    control = document.createElement('input');
+    control.type = 'text';
+    control.id = 'value';
+    control.placeholder = 'e.g. HelloWorld';
+    hint.textContent = fieldType === 'String' ? 'Text field.' : `Unrecognized type (${fieldType}) — defaulting to text.`;
+  }
+
+  container.appendChild(control);
+  updateOperatorChoices(fieldType);
+}
+
+// Relative math (+/-/*//) only makes sense for numeric fields — Boolean/enum/String only support =.
+function updateOperatorChoices(fieldType) {
+  const operatorSelect = document.getElementById('operator');
+  const numeric = NUMERIC_TYPES.has(fieldType);
+  for (const option of operatorSelect.options) {
+    option.disabled = option.value !== '=' && !numeric;
+  }
+  if (!numeric) {
+    operatorSelect.value = '=';
+  }
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!selectedPrefab) { bc.textContent = 'Pick a prefab, then a component.'; return; }
+  let parts = [`<b>${selectedPrefab}</b>`];
+  pathStack.forEach((p, i) => { if (i > 0) parts.push(p.fieldName); else parts.push(p.typeName); });
+  bc.innerHTML = parts.join(' &rsaquo; ');
+}
+
+// ---- Kind toggle (Item vs NamePattern just changes the label, same input either way) ----
+document.getElementById('kind').addEventListener('change', function () {
+  document.getElementById('itemIdLabel').textContent = this.value === 'NamePattern' ? 'Name pattern' : 'Item id';
+});
+
+// ---- Building overrides ----
+document.getElementById('addOverride').addEventListener('click', function () {
+  const fieldPath = document.getElementById('fieldPath').value.trim();
+  const typeName = document.getElementById('typeName').value.trim();
+  const itemId = document.getElementById('itemId').value.trim();
+  const op = document.getElementById('operator').value;
+  const value = document.getElementById('value').value.trim();
+  const kind = document.getElementById('kind').value;
+  const scope = document.getElementById('scope').value;
+  const percentage = document.getElementById('percentage').checked && (op === '+' || op === '-');
+
+  if (!fieldPath || !typeName || !itemId || !value) {
+    alert('Field path, type name, item id / pattern, and value are all required.');
+    return;
+  }
+
+  overrides.push({
+    typeName, scope, kind, itemId, fieldPath,
+    expression: op + value + (percentage ? '%' : '')
+  });
+  renderOverrideList();
+});
+
+function renderOverrideList() {
+  const container = document.getElementById('overrideList');
+  if (overrides.length === 0) { container.innerHTML = '<p class="muted">None added yet.</p>'; return; }
+  container.innerHTML = '';
+  overrides.forEach((o, i) => {
+    const div = document.createElement('div');
+    div.className = 'override-item';
+    div.innerHTML = `<span>${o.typeName}/${o.itemId} &rsaquo; <code>${o.fieldPath}</code>: <code>${o.expression}</code></span>`;
+    const btn = document.createElement('button');
+    btn.className = 'secondary';
+    btn.textContent = 'Remove';
+    btn.onclick = () => { overrides.splice(i, 1); renderOverrideList(); };
+    div.appendChild(btn);
+    container.appendChild(div);
+  });
+}
+
+// ---- YAML generation — plain string building, matches the schema ModletLoader.cs reads ----
+// Plain (unquoted) scalars are only safe for simple identifier-like text — a leading *, &, !, |, >, %,
+// @, -, ?, :, #, or a wrapping quote are all YAML-significant and would otherwise corrupt the file
+// (e.g. a bare "*1.25" is parsed as an ALIAS reference, not the literal text "*1.25").
+function yamlEscape(v) {
+  if (/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(v)) return v;
+  return '"' + String(v).replace(/"/g, '\\"') + '"';
+}
+
+// Override expressions ("*1.25", "+20%", "=HelloWorld") always start with a light-math operator
+// character, which is exactly the class yamlEscape above must quote — so always quote here directly
+// rather than relying on that general-purpose check for this specific, always-risky value.
+function yamlQuote(v) {
+  return '"' + String(v).replace(/"/g, '\\"') + '"';
+}
+
+document.getElementById('generate').addEventListener('click', function () {
+  const id = document.getElementById('modletId').value.trim() || 'com.yourname.yourpack';
+  const displayName = document.getElementById('displayName').value.trim() || id;
+  const priority = document.getElementById('priority').value || '0';
+  const enabled = document.getElementById('enabled').checked;
+
+  const manifestYaml =
+`schemaVersion: 1
+displayName: ${yamlEscape(displayName)}
+enabled: ${enabled}
+priority: ${priority}
+`;
+
+  let overridesYaml = 'overrides:\n';
+  if (overrides.length === 0) {
+    overridesYaml += '  []\n';
+  } else {
+    overrides.forEach(o => {
+      overridesYaml += `  - target:\n`;
+      overridesYaml += `      typeName: ${yamlEscape(o.typeName)}\n`;
+      overridesYaml += `      scope: ${o.scope}\n`;
+      overridesYaml += `      kind: ${o.kind}\n`;
+      overridesYaml += o.kind === 'NamePattern'
+        ? `      namePattern: ${yamlEscape(o.itemId)}\n`
+        : `      itemId: ${yamlEscape(o.itemId)}\n`;
+      overridesYaml += `    fields:\n`;
+      overridesYaml += `      ${o.fieldPath}: ${yamlQuote(o.expression)}\n`;
+    });
+  }
+
+  document.getElementById('manifestYaml').value = manifestYaml;
+  document.getElementById('overridesYaml').value = overridesYaml;
+  document.getElementById('downloadManifest').disabled = false;
+  document.getElementById('downloadOverrides').disabled = false;
+
+  document.getElementById('downloadManifest').onclick = () => downloadText(`${id}_manifest.yaml`, manifestYaml);
+  document.getElementById('downloadOverrides').onclick = () => downloadText(`${id}_overrides.yaml`, overridesYaml);
+});
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: 'text/yaml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

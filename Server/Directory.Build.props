@@ -1,5 +1,7 @@
 <Project>
-  <!-- environment.props is loaded by Jotunn Paths.props via SolutionDir (before Directory.Build continues). Do not Import it again here. -->
+  <!-- No Jotunn here, so nothing else auto-imports environment.props — import it ourselves. Server has
+       its own environment.props (sibling to the baseline's, not shared) since paths could differ per build. -->
+  <Import Project="$(MSBuildThisFileDirectory)environment.props" Condition="Exists('$(MSBuildThisFileDirectory)environment.props')" />
   <Import Project="$(MSBuildThisFileDirectory)mod.package.props" Condition="Exists('$(MSBuildThisFileDirectory)mod.package.props')" />
   <!-- CI checks out this repo alone — use NuGet net48 reference assemblies. -->
   <PropertyGroup Condition="'$(CI_NET48_FWPATH)' != ''">

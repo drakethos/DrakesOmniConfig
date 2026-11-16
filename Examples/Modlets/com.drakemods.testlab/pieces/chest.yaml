@@ -1,0 +1,20 @@
+# Chest: Container component. m_width/m_height are the inventory grid size (Int32) — a different
+# field-type shape than the Single-heavy fields tested elsewhere.
+overrides:
+  - target:
+      typeName: Container
+      scope: Prefab
+      kind: Item
+      itemId: piece_chest
+    fields:
+      m_width: "=6"
+      m_height: "=4"
+      m_checkGuardStone: "false"
+
+  - target:
+      typeName: WearNTear
+      scope: Prefab
+      kind: Item
+      itemId: piece_chest
+    fields:
+      m_health: "=1000"

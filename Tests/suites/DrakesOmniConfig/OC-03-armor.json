@@ -1,0 +1,12 @@
+{
+  "name": "OC-03 armor: com.drakemods.testlab/armor.yaml's 'Armor*' wildcard resolved",
+  "description": "m_movementModifier=0 and m_itemData.m_durability=500 are absolute Set overrides, so they're asserted exactly. m_armor/m_armorPerLevel use *1.4 (relative) and aren't asserted to an exact number for the same reason as weapons.yaml's damage fields; the min check confirms the field resolved and stayed positive.",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "ArmorBronzeChest", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "ArmorBronzeChest durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "ArmorBronzeChest", "component": "ItemDrop", "field": "m_itemData.m_shared.m_movementModifier" }, "expect": 0, "label": "ArmorBronzeChest movement penalty removed" },
+    { "do": "check", "check": "hook", "name": "omniconfig.field", "args": { "prefab": "ArmorBronzeChest", "component": "ItemDrop", "field": "m_itemData.m_shared.m_armor" }, "min": 0.01, "label": "ArmorBronzeChest m_armor resolved and non-zero after *1.4" }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "DrakesOmniConfig" }
+  ]
+}

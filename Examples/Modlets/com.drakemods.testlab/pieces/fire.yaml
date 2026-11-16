@@ -1,0 +1,24 @@
+# Campfire-family pieces: Fireplace component. m_infiniteFuel is a plain Boolean field (Set with no
+# operator prefix, "true"/"false" text) — different control shape than the numeric expressions used
+# everywhere else in this testlab.
+overrides:
+  - target:
+      typeName: Fireplace
+      scope: Prefab
+      kind: Item
+      itemId: fire_pit
+    fields:
+      m_maxFuel: "*2"
+      m_secPerFuel: "/2"
+      m_infiniteFuel: "true"
+      m_startFuel: "=0"
+
+  - target:
+      typeName: Fireplace
+      scope: Prefab
+      kind: Item
+      itemId: hearth
+    fields:
+      m_maxFuel: "*2"
+      m_secPerFuel: "/2"
+      m_startFuel: "=0"

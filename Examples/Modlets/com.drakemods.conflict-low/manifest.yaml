@@ -1,0 +1,4 @@
+schemaVersion: 1
+displayName: Conflict Demo (low priority)
+enabled: true
+priority: 0

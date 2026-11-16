@@ -1,0 +1,11 @@
+# "Leather" sits in the MIDDLE of armor prefab names (ArmorLeatherChest, ArmorLeatherLegs,
+# ArmorLeatherHood), so this needs a contains-match ("*Leather*"), not a suffix match like the bronze
+# weapons example. m_armor is my best understanding of SharedData's armor-value field name.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "*Leather*"
+    fields:
+      m_itemData.m_shared.m_armor: "*1.5"

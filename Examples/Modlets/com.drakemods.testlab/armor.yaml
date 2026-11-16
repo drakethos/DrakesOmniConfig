@@ -1,0 +1,14 @@
+# "Armor" sits at the START of every armor prefab name (ArmorLeatherChest, ArmorIronChest,
+# ArmorBronzeLegs, ArmorRootHelmet, ...) so a prefix match catches all of them in one pattern, across
+# every tier and slot at once.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Armor*"
+    fields:
+      m_itemData.m_shared.m_armor: "*1.4"
+      m_itemData.m_shared.m_armorPerLevel: "*1.4"
+      m_itemData.m_shared.m_movementModifier: "=0"
+      m_itemData.m_durability: "=500"

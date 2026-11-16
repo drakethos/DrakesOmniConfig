@@ -89,6 +89,11 @@
     <MakeDir Directories="$(R2ModDeployPath)\Assets\Localization" Condition="'@(LocalizationJson)' != ''" />
     <MakeDir Directories="$(R2ModDeployPath)\Assets\Icons" Condition="'@(PaperIcon)' != ''" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(R2ModDeployPath)\" SkipUnchangedFiles="false" />
+    <!-- Non-BepInEx dependency DLLs (e.g. YamlDotNet) — without this, BepInEx throws a TypeLoadException
+         trying to load the plugin and it silently fails to run at all. ReferenceCopyLocalPaths is the
+         same set MSBuild already copies next to the DLL in bin\; just mirror it into the deploy folder too. -->
+    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(R2ModDeployPath)\" SkipUnchangedFiles="true"
+          Condition="'@(ReferenceCopyLocalPaths)' != ''" />
     <Copy SourceFiles="@(LocalizationJson)"
           DestinationFolder="$(R2ModDeployPath)\Assets\Localization"
           SkipUnchangedFiles="true"
@@ -123,6 +128,9 @@
     <MakeDir Directories="$(GaleModDeployPath)\Assets\Localization" Condition="'@(LocalizationJson)' != ''" />
     <MakeDir Directories="$(GaleModDeployPath)\Assets\Icons" Condition="'@(PaperIcon)' != ''" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GaleModDeployPath)\" SkipUnchangedFiles="false" />
+    <!-- Non-BepInEx dependency DLLs (e.g. YamlDotNet) — same reasoning as CopyToR2Profile above. -->
+    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(GaleModDeployPath)\" SkipUnchangedFiles="true"
+          Condition="'@(ReferenceCopyLocalPaths)' != ''" />
     <Copy SourceFiles="@(LocalizationJson)"
           DestinationFolder="$(GaleModDeployPath)\Assets\Localization"
           SkipUnchangedFiles="true"
@@ -152,11 +160,14 @@
           DependsOnTargets="PrepareModPackageMetadata;ComposeThunderstoreDependencies"
           Condition="'$(UpdateR2ModsYml)' == 'true' and '$(R2ModsYmlPath)' != '' and Exists('$(R2ModProfileModScript)')">
     <PropertyGroup>
-      <_R2ModDescFile>$(IntermediateOutputPath)r2mod-description.txt</_R2ModDescFile>
+      <!-- Absolute, not relative — Exec's working directory isn't guaranteed to be the project
+           directory on every host (devenv-hosted MSBuild vs. standalone dotnet msbuild can differ). -->
+      <_R2ModDescFile>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)r2mod-description.txt</_R2ModDescFile>
       <_R2ThunderstoreDeps>@(ThunderstoreDependency, ';')</_R2ThunderstoreDeps>
     </PropertyGroup>
     <WriteLinesToFile File="$(_R2ModDescFile)" Lines="$(Description)" Overwrite="true" />
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(R2ModProfileModScript)&quot; -ModsYmlPath &quot;$(R2ModsYmlPath)&quot; -AuthorName &quot;$(ThunderstoreAuthor)&quot; -PackageName &quot;$(ThunderstoreName)&quot; -DisplayName &quot;$(BepInPluginName)&quot; -Version &quot;$(Version)&quot; -DescriptionFile &quot;$(_R2ModDescFile)&quot; -WebsiteUrl &quot;$(WebsiteUrl)&quot; -Dependencies &quot;$(_R2ThunderstoreDeps)&quot;"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
           IgnoreExitCode="false" />
     <Message Importance="high" Text="Synced mods.yml: $(ThunderstoreAuthor)-$(ThunderstoreName) ($(Version))" />
   </Target>

@@ -21,9 +21,103 @@ namespace DrakesOmniConfig.Config.Modlets.Management;
 /// </summary>
 internal sealed class ConflictResolver
 {
-    // TODO(you): implement the rule above.
     public List<ResolvedOverride> Resolve(IReadOnlyList<Modlet> modlets)
     {
-        return new List<ResolvedOverride>();
+        var winners = new Dictionary<string, Claim>();
+
+        foreach (Modlet modlet in modlets)
+        {
+            if (!modlet.Manifest.Enabled)
+            {
+                continue;
+            }
+
+            foreach (ModletOverride modletOverride in modlet.Overrides)
+            {
+                foreach (KeyValuePair<string, FieldValueExpression> field in modletOverride.Fields)
+                {
+                    string key = TargetKey(modletOverride.Target, field.Key);
+                    var claim = new Claim(modletOverride.Target, field.Key, field.Value, modlet.Manifest, modletOverride.Override);
+
+                    if (!winners.TryGetValue(key, out Claim? incumbent) || Beats(claim, incumbent))
+                    {
+                        winners[key] = claim;
+                    }
+                }
+            }
+        }
+
+        var results = new List<ResolvedOverride>();
+        foreach (Claim claim in winners.Values)
+        {
+            results.Add(new ResolvedOverride
+            {
+                Target = claim.Target,
+                FieldName = claim.FieldName,
+                Expression = claim.Expression,
+                WinningModletId = claim.ModletId,
+            });
+        }
+
+        return results;
+    }
+
+    // Identifies "the same thing being touched" across modlets so they can actually conflict.
+    // TODO(you): Group/NamePattern/Category selectors that resolve to overlapping sets of real targets
+    // (e.g. two different wildcard patterns that both happen to match "BronzeSword") aren't detected as
+    // conflicting by this key — that needs real selector-matching against live targets, which is Phase C.
+    private static string TargetKey(TargetSelector target, string fieldName)
+    {
+        string identity = target.Kind switch
+        {
+            SelectorKind.Item => target.ItemId ?? "",
+            SelectorKind.Group => target.GroupName ?? "",
+            SelectorKind.NamePattern => target.NamePattern ?? "",
+            SelectorKind.Category => target.Category ?? "",
+            _ => "*",
+        };
+
+        return $"{target.TypeName}|{identity}|{fieldName}";
+    }
+
+    private static bool Beats(Claim challenger, Claim incumbent)
+    {
+        if (challenger.Override != incumbent.Override)
+        {
+            return challenger.Override;
+        }
+
+        int tierCompare = ((int)challenger.Target.Kind).CompareTo((int)incumbent.Target.Kind);
+        if (tierCompare != 0)
+        {
+            return tierCompare < 0;
+        }
+
+        if (challenger.Priority != incumbent.Priority)
+        {
+            return challenger.Priority > incumbent.Priority;
+        }
+
+        return false;
+    }
+
+    private sealed class Claim
+    {
+        public TargetSelector Target { get; }
+        public string FieldName { get; }
+        public FieldValueExpression Expression { get; }
+        public string ModletId { get; }
+        public int Priority { get; }
+        public bool Override { get; }
+
+        public Claim(TargetSelector target, string fieldName, FieldValueExpression expression, ModletManifest manifest, bool isOverride)
+        {
+            Target = target;
+            FieldName = fieldName;
+            Expression = expression;
+            ModletId = manifest.Id;
+            Priority = manifest.Priority;
+            Override = isOverride;
+        }
     }
 }

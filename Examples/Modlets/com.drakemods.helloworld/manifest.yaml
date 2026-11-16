@@ -1,0 +1,6 @@
+# Phase A "hello world" proof-of-pipe fixture (see ROADMAP.md Phase A).
+# Id comes from the FOLDER NAME (com.drakemods.helloworld), not from a field in here.
+schemaVersion: 1
+displayName: Hello World
+enabled: true
+priority: 0

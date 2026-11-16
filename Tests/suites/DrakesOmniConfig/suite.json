@@ -1,0 +1,18 @@
+{
+  "name": "DrakesOmniConfig",
+  "description": "Automated regression for the comprehensive testlab modlet (com.drakemods.testlab): spawns nothing — every check reads the real prefab template through the generic 'omniconfig.field' test hook (or, for the live Player singleton's computed stats, through TestLab's own 'stat' check), confirming each override in player.yaml / weapons.yaml / armor.yaml / pieces/*.yaml actually took effect at the value it set.",
+  "requireMods": [
+    {
+      "guid": "com.drakemods.omniconfig",
+      "minVersion": "0.1.0"
+    }
+  ],
+  "setup": {
+    "timeOfDay": 0.5,
+    "freezeTime": 1,
+    "god": 1,
+    "noBuild": "off",
+    "hideUnlockPopups": 1
+  },
+  "resetBetweenTests": true
+}

@@ -1,0 +1,26 @@
+# Ship: both real ship prefabs (Karve, VikingShip) share the same component type (Ship) but don't share
+# a common name prefix/suffix, so these are explicit Item selectors rather than one NamePattern.
+overrides:
+  - target:
+      typeName: Ship
+      scope: Prefab
+      kind: Item
+      itemId: Karve
+    fields:
+      m_sailForceFactor: "*1.5"
+      m_rudderSpeed: "*1.5"
+      m_force: "*1.25"
+      m_backwardForce: "*1.25"
+      m_waterImpactDamage: "=0"
+
+  - target:
+      typeName: Ship
+      scope: Prefab
+      kind: Item
+      itemId: VikingShip
+    fields:
+      m_sailForceFactor: "*1.5"
+      m_rudderSpeed: "*1.5"
+      m_force: "*1.25"
+      m_backwardForce: "*1.25"
+      m_waterImpactDamage: "=0"

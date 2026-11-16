@@ -1,0 +1,26 @@
+# Scope.Global (Player.Awake Postfix). All field names verified against the real
+# GameDataManifest.json (2026-11-15) — these are the same fields that broke this test profile when one
+# of them was wrong (see com.drakemods.playertweaks/player.yaml's history).
+# Every field here uses "=" (absolute Set), on purpose — relative operators (*, /, +, -) are already
+# exercised thoroughly by weapons.yaml/armor.yaml; keeping these absolute means the automated suite
+# (Tests/suites/DrakesOmniConfig/OC-01-player.json) can assert an exact expected number for each one
+# without needing to know vanilla's own default first.
+# override: true — com.drakemods.playertweaks (another example modlet in this same profile) ALSO
+# targets Player/m_baseHP/m_baseStamina/m_jumpForce at equal specificity (Item/Player, Scope.Global).
+# Without this, ConflictResolver picks a winner between the two by its normal tie-break and this
+# modlet's own values stop being the ones actually on the live Player — exactly what the automated
+# suite caught (m_baseHP read back as playertweaks' 50, not this file's 400) before this was added.
+overrides:
+  - target:
+      typeName: Player
+      scope: Global
+      kind: Item
+      itemId: Player
+    override: true
+    fields:
+      m_baseHP: "=400"
+      m_baseStamina: "=400"
+      m_maxCarryWeight: "=600"
+      m_jumpForce: "=10"
+      m_runStaminaDrain: "=2"
+      m_autoPickupRange: "=3"

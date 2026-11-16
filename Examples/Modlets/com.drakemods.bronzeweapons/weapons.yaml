@@ -1,0 +1,21 @@
+# First real wildcard test. "*Bronze" (suffix match) targets weapons (SwordBronze, AxeBronze,
+# MaceBronze, SpearBronze, ...) without also catching bronze ARMOR ("ArmorBronzeChest"/"Legs" don't
+# end in "Bronze", so they're excluded). Damage is a STRUCT (DamageTypes) with one field per damage
+# type — listing every physical type and multiplying all of them is safe: a weapon with 0 in a type it
+# doesn't use just stays 0 (0 * 1.25 = 0), so this applies correctly across swords/axes/maces/spears at
+# once without needing per-weapon-type logic.
+#
+# Field names below (m_blunt/m_slash/m_pierce/m_chop) are my best understanding of the struct layout —
+# not verified against decompiled source. If one is wrong, ReflectedFieldAccessor throws a
+# MissingFieldException naming exactly which segment didn't resolve.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "*Bronze"
+    fields:
+      m_itemData.m_shared.m_damages.m_blunt: "*1.25"
+      m_itemData.m_shared.m_damages.m_slash: "*1.25"
+      m_itemData.m_shared.m_damages.m_pierce: "*1.25"
+      m_itemData.m_shared.m_damages.m_chop: "*1.25"

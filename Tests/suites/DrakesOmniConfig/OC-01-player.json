@@ -1,0 +1,20 @@
+{
+  "name": "OC-01 player stats: com.drakemods.testlab/player.yaml took effect on the live Player",
+  "description": "Scope.Global overrides patch the live singleton's FIELDS directly on every Player.Awake (GlobalRebindHook), so this reads those same fields back with omniconfig.field's 'live': true rather than TestLab's 'stat' check: GetMaxHealth()/GetMaxStamina() layer food bonuses and, for TestLab's own reused saved test character, the save file's own stored max/current HP on top -- neither of those downstream layers is something this mod's engine controls, so asserting through them would fail for reasons that have nothing to do with whether the override itself landed.",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_baseHP" }, "expect": 400, "label": "m_baseHP" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_baseStamina" }, "expect": 400, "label": "m_baseStamina" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_maxCarryWeight" }, "expect": 600, "label": "m_maxCarryWeight" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_jumpForce" }, "expect": 10, "label": "m_jumpForce" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_runStaminaDrain" }, "expect": 2, "label": "m_runStaminaDrain" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "live": true, "component": "Player", "field": "m_autoPickupRange" }, "expect": 3, "label": "m_autoPickupRange" },
+
+    { "do": "check", "check": "stat", "name": "carryWeight", "expect": 600, "label": "GetMaxCarryWeight() agrees (not food/save-derived)" },
+    { "do": "check", "check": "stat", "name": "jumpForce", "expect": 10, "label": "live jumpForce stat agrees" },
+    { "do": "check", "check": "stat", "name": "runStaminaDrain", "expect": 2, "label": "live runStaminaDrain stat agrees" },
+    { "do": "check", "check": "stat", "name": "autoPickupRange", "expect": 3, "label": "live autoPickupRange stat agrees" }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "DrakesOmniConfig" }
+  ]
+}

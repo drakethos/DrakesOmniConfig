@@ -1,0 +1,11 @@
+# Pairs with com.drakemods.conflict-high targeting the SAME field on the SAME item — ConflictResolver
+# should pick conflict-high's claim (priority 10 beats priority 0, same SelectorKind tier, neither
+# marked Override). Check LogOutput.log / WinningModletId if you want to confirm which one actually won.
+overrides:
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: Item
+      itemId: Hammer
+    fields:
+      m_itemData.m_shared.m_weight: "=1.0"

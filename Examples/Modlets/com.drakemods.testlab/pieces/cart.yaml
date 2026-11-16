@@ -1,0 +1,22 @@
+# Cart: component is Vagon, not ItemDrop — exercises a non-item MonoBehaviour with a component-type
+# lookup via Piece.GetComponent("Vagon"). Also hits WearNTear.m_health (piece durability — same
+# component every placeable piece has) since it's attached to the same prefab.
+overrides:
+  - target:
+      typeName: Vagon
+      scope: Prefab
+      kind: Item
+      itemId: Cart
+    fields:
+      m_breakForce: "*2"
+      m_baseMass: "*1.5"
+      m_itemWeightMassFactor: "/2"
+      m_playerExtraPullMass: "=50"
+
+  - target:
+      typeName: WearNTear
+      scope: Prefab
+      kind: Item
+      itemId: Cart
+    fields:
+      m_health: "=1000"

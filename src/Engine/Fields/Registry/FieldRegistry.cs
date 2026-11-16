@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using DrakesOmniConfig.Engine.Fields.Accessors;
+using DrakesOmniConfig.Engine.Fields.Accessors.Reflected;
 
 namespace DrakesOmniConfig.Engine.Fields.Registry;
 
@@ -12,16 +15,58 @@ namespace DrakesOmniConfig.Engine.Fields.Registry;
 internal sealed class FieldRegistry
 {
     private readonly Dictionary<string, IFieldAccessor> _virtual = new();
+    private readonly Dictionary<string, IFieldAccessor> _reflectedCache = new();
 
-    // TODO(you): call once at startup, e.g. RegisterVirtual("Character", "FallDamageMultiplier", new FallDamageAccessor()).
     public void RegisterVirtual(string typeName, string fieldName, IFieldAccessor accessor)
     {
+        _virtual[Key(typeName, fieldName)] = accessor;
     }
 
-    // TODO(you): check _virtual first (key likely "TypeName.FieldName"); fall back to building/caching
-    // a ReflectedFieldAccessor for anything not explicitly registered.
     public IFieldAccessor Resolve(string typeName, string fieldName)
     {
-        return null!;
+        string key = Key(typeName, fieldName);
+
+        if (_virtual.TryGetValue(key, out IFieldAccessor? virtualAccessor))
+        {
+            return virtualAccessor;
+        }
+
+        if (_reflectedCache.TryGetValue(key, out IFieldAccessor? cached))
+        {
+            return cached;
+        }
+
+        Type targetType = ResolveType(typeName)
+            ?? throw new TypeLoadException(
+                $"Could not find type '{typeName}' in any loaded assembly (resolving field '{fieldName}').");
+
+        var accessor = new ReflectedFieldAccessor(targetType, fieldName);
+        _reflectedCache[key] = accessor;
+        return accessor;
+    }
+
+    private static string Key(string typeName, string fieldName) => $"{typeName}.{fieldName}";
+
+    // Plain Type.GetType only looks in mscorlib + the calling assembly, which never finds Valheim's own
+    // types (ItemDrop, Humanoid, etc. live in assembly_valheim). Search every already-loaded assembly
+    // instead — by the time a BepInEx plugin's Awake() runs, the game's own assemblies are loaded.
+    private static Type? ResolveType(string typeName)
+    {
+        Type? direct = Type.GetType(typeName);
+        if (direct != null)
+        {
+            return direct;
+        }
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type? found = assembly.GetType(typeName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 }

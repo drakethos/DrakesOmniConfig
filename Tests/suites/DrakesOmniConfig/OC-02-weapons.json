@@ -1,0 +1,21 @@
+{
+  "name": "OC-02 weapons: com.drakemods.testlab/weapons.yaml's 11 NamePattern families resolved",
+  "description": "One representative prefab per weapon-type wildcard, read straight off the real prefab template via the omniconfig.field hook. Checks the absolute m_itemData.m_durability=500 override exactly (deterministic, no vanilla-baseline guesswork needed). The relative damage-multiplier fields (m_blunt/m_slash/m_pierce/m_chop/m_attackForce, all *1.3) are NOT asserted to an exact number here since vanilla's own per-weapon base damage isn't recorded anywhere this suite can read — durability resolving correctly on the same override entry, plus the suite-level noErrors check, is the evidence that the sibling damage fields in the same dictionary applied too (one bad field name would throw and log, same as com.drakemods.playertweaks's m_maxHealth did before this hardening).",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "SwordBronze", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Sword* -> SwordBronze durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "AxeBronze", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Axe* -> AxeBronze durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Battleaxe", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Battleaxe* -> Battleaxe durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "AtgeirBronze", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Atgeir* -> AtgeirBronze durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "SpearBronze", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Spear* -> SpearBronze durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "MaceBronze", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Mace* -> MaceBronze durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "KnifeCopper", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Knife* -> KnifeCopper durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "SledgeWood", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Sledge* -> SledgeWood durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Club", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Club* -> Club durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "Bow", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Bow* -> Bow durability" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "CrossbowArbalest", "component": "ItemDrop", "field": "m_itemData.m_durability" }, "expect": 500, "label": "Crossbow* -> CrossbowArbalest durability" },
+    { "do": "check", "check": "hook", "name": "omniconfig.field", "args": { "prefab": "SwordBronze", "component": "ItemDrop", "field": "m_itemData.m_shared.m_damages.m_slash" }, "min": 0.01, "label": "SwordBronze m_slash resolved and non-zero after *1.3" }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "DrakesOmniConfig" }
+  ]
+}

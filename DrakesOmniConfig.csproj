@@ -43,6 +43,26 @@
       <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- BaseUnityPlugin inherits MonoBehaviour — needed even though nothing here calls Unity APIs directly.
+         Private=false: this ships with the game itself, never bundle it with the mod. -->
+    <Reference Include="UnityEngine">
+      <HintPath>$(CorlibPath)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(CorlibPath)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- The game's own types (ZNetScene, ItemDrop, etc.) — publicized so private fields are reachable
+         without reflection where that matters. Private=false: never bundle the game's own assembly. -->
+    <Reference Include="assembly_valheim">
+      <HintPath>$(PublicizedAssembliesPath)\assembly_valheim_publicized.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Phase B: real YAML parsing. net47 build (binary-compatible with net481), vendored via packages.config. -->
+    <Reference Include="YamlDotNet">
+      <HintPath>packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -50,8 +70,8 @@
   <ItemGroup>
     <Compile Include="src\DrakesOmniConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-
     <Compile Include="src\Config\Settings\MainConfig.cs" />
+    <Compile Include="src\Config\Settings\ModLog.cs" />
     <Compile Include="src\Config\Modlets\Schema\ModletManifest.cs" />
     <Compile Include="src\Config\Modlets\Schema\TargetSelector.cs" />
     <Compile Include="src\Config\Modlets\Schema\FieldValueExpression.cs" />
@@ -61,7 +81,6 @@
     <Compile Include="src\Config\Modlets\Loading\ModletLoader.cs" />
     <Compile Include="src\Config\Modlets\Management\ModletManager.cs" />
     <Compile Include="src\Config\Modlets\Management\ConflictResolver.cs" />
-
     <Compile Include="src\Engine\Orchestration\ModletOrchestrator.cs" />
     <Compile Include="src\Engine\Hooks\PrefabPassHook.cs" />
     <Compile Include="src\Engine\Hooks\GlobalRebindHook.cs" />
@@ -74,9 +93,9 @@
     <Compile Include="src\Engine\Node\Node.cs" />
     <Compile Include="src\Engine\Node\NodeLoader.cs" />
     <Compile Include="src\Engine\DynamicPatcher\HarmonyHookGen.cs" />
-
     <Compile Include="src\Sync\Transport\ModletChannel.cs" />
     <Compile Include="src\Sync\Authority\ModletAuthority.cs" />
+    <Compile Include="src\Tools\TestHooks\OmniConfigTestHooks.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -98,9 +117,30 @@
     <!-- Gale/r2modman keep folder structure only under plugins/ (patchers/ monomod/ core/ config/): DLL lives there; manifest.json, icon.png, README.md and CHANGELOG.md sit at the zip root. -->
     <MakeDir Directories="$(ThunderstoreFolder)\plugins" />
     <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(ThunderstoreFolder)\plugins" />
+    <!-- Non-BepInEx dependency DLLs (e.g. YamlDotNet) must ship alongside the plugin DLL. -->
+    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(ThunderstoreFolder)\plugins"
+          Condition="'@(ReferenceCopyLocalPaths)' != ''" />
     <Copy SourceFiles="$(TargetDir)README.md" DestinationFiles="$(ThunderstoreFolder)\README.md" Condition="Exists('$(TargetDir)README.md')" />
     <Copy SourceFiles="$(TargetDir)CHANGELOG.md" DestinationFiles="$(ThunderstoreFolder)\CHANGELOG.md" Condition="Exists('$(TargetDir)CHANGELOG.md')" />
     <Copy SourceFiles="$(TargetDir)icon.png" DestinationFiles="$(ThunderstoreFolder)\icon.png" Condition="Exists('$(TargetDir)icon.png')" />
     <Exec Command="powershell -Command Compress-Archive -Path '$(ThunderstoreFolder)\*' -DestinationPath '$(ZipOutput)' -Force" Condition="'$(CI_SKIP_POST_BUILD)' == ''" />
+  </Target>
+
+  <!-- Dev convenience only — never ships: copies Examples/Modlets into the real BepInEx/config location
+       (same one MainConfig.ModletsFolder defaults to) so testing doesn't depend on a path that only
+       exists in this checkout. Mirrors the shape of CopyToGaleProfile/CopyToR2Profile in build/. -->
+  <ItemGroup>
+    <ExampleModletFile Include="Examples\Modlets\**\*.*" />
+  </ItemGroup>
+  <Target Name="DeployExampleModlets" AfterTargets="Build" Condition="'$(CI_SKIP_POST_BUILD)' == ''">
+    <Copy SourceFiles="@(ExampleModletFile)"
+          DestinationFolder="$(GaleModPath)\$(ProfileName)\BepInEx\config\DrakesOmniConfig\Modlets\%(RecursiveDir)"
+          Condition="'$(GaleModPath)' != '' and '$(ProfileName)' != ''"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ExampleModletFile)"
+          DestinationFolder="$(R2ModPath)\$(ProfileName)\BepInEx\config\DrakesOmniConfig\Modlets\%(RecursiveDir)"
+          Condition="'$(R2ModPath)' != '' and '$(ProfileName)' != ''"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Deployed Examples/Modlets -&gt; BepInEx/config/DrakesOmniConfig/Modlets ($(ProfileName))" />
   </Target>
 </Project>

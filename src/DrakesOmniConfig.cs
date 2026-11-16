@@ -1,4 +1,5 @@
 using BepInEx;
+using BepInEx.Logging;
 using HarmonyLib;
 using DrakesOmniConfig.Config.Modlets.Loading;
 using DrakesOmniConfig.Config.Modlets.Management;
@@ -21,9 +22,11 @@ namespace DrakesOmniConfig
     /// Valheim's own GUID-matching compat check would wrongly reject every connection. Sync relies on
     /// ServerSync's own RPC-name handshake (Sync.Authority.ModletAuthority), which never checks GUID equality.
     /// </summary>
+    
     [BepInPlugin(GUID, ModName, Version)]
     public partial class DrakesOmniConfigPlugin : BaseUnityPlugin
     {
+        
         private readonly Harmony _harmony = new Harmony(GUID);
         private ModletOrchestrator? _orchestrator;
 
@@ -31,9 +34,8 @@ namespace DrakesOmniConfig
         {
             _harmony.PatchAll();
 
-            // TODO(you): this is the soft-wired dependency graph — construction only, no behaviour yet.
-            // Nothing below does anything until the TODOs in each class are filled in.
             var mainConfig = new MainConfig(Config);
+            ModLog.Init(Logger, mainConfig.MinimumLogLevel.Value);
             var loader = new ModletLoader();
             var resolver = new ConflictResolver();
             var modletManager = new ModletManager(loader, resolver);
@@ -42,9 +44,7 @@ namespace DrakesOmniConfig
             var authority = new ModletAuthority();
             _orchestrator = new ModletOrchestrator(modletManager, fieldPatcher, authority);
 
-            // TODO(you): call _orchestrator.Bootstrap() once it actually branches on ZNet.instance.IsServer() —
-            // calling it before that exists would currently do nothing anyway.
-
+            _orchestrator.Bootstrap(mainConfig.ModletsFolder.Value);
             Logger.LogInfo($"{ModName} {Version} Awake.");
         }
     }

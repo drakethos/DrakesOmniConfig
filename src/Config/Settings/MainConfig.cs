@@ -1,15 +1,37 @@
+using System.IO;
+using BepInEx;
 using BepInEx.Configuration;
 
 namespace DrakesOmniConfig.Config.Settings;
 
-/// <summary>
-/// The mod's own BepInEx settings — where to find modlets, hot-reload behaviour. NOT modlet content
-/// itself; that's Config.Modlets.
-/// </summary>
 internal sealed class MainConfig
 {
-    // TODO(you): ConfigEntry<string> ModletsFolder, ConfigEntry<bool> HotReload, etc. Bind(ConfigFile) in the constructor.
+    public ConfigEntry<LogLevel> MinimumLogLevel { get; }
+    public ConfigEntry<string> ModletsFolder { get; }
+
     public MainConfig(ConfigFile config)
     {
+        MinimumLogLevel = config.Bind(
+            "General",
+            "MinimumLogLevel",
+            LogLevel.Info,
+            "Minimum level of messages to display."
+        );
+
+        ModletsFolder = config.Bind(
+            "General",
+            "ModletsFolder",
+            Path.Combine(Paths.ConfigPath, "DrakesOmniConfig", "Modlets"),
+            "Folder containing modlet subfolders (each with its own manifest.yaml). Defaults to BepInEx/config/DrakesOmniConfig/Modlets."
+        );
     }
+}
+
+internal enum LogLevel
+{
+    Debug = 0,
+    Info = 1,
+    Warning = 2,
+    Error = 3,
+    Fatal = 4
 }

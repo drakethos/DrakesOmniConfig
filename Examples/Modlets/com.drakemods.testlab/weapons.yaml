@@ -1,0 +1,89 @@
+# Broad (not exhaustive) weapon coverage: one NamePattern per weapon-type prefix, each catching every
+# tier of that type at once (SwordBronze/SwordIron/SwordBlackmetal/... all match "Sword*"). Damage is
+# the DamageTypes struct (m_blunt/m_slash/m_pierce/m_chop) — multiplying all four is safe even for a
+# weapon that only uses one or two of them (0 * 1.3 stays 0), same pattern as
+# com.drakemods.bronzeweapons/weapons.yaml. m_attackForce and m_durability are plain SharedData/ItemData
+# fields, verified against GameDataManifest.json (2026-11-15).
+overrides:
+  - target: &swordTarget
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Sword*"
+    fields: &weaponFields
+      m_itemData.m_shared.m_damages.m_blunt: "*1.3"
+      m_itemData.m_shared.m_damages.m_slash: "*1.3"
+      m_itemData.m_shared.m_damages.m_pierce: "*1.3"
+      m_itemData.m_shared.m_damages.m_chop: "*1.3"
+      m_itemData.m_shared.m_attackForce: "*1.3"
+      m_itemData.m_durability: "=500"
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Axe*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Battleaxe*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Atgeir*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Spear*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Mace*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Knife*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Sledge*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Club*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Bow*"
+    fields: *weaponFields
+
+  - target:
+      typeName: ItemDrop
+      scope: Prefab
+      kind: NamePattern
+      namePattern: "Crossbow*"
+    fields: *weaponFields

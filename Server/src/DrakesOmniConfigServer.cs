@@ -28,9 +28,8 @@ namespace DrakesOmniConfig
         {
             _harmony.PatchAll();
 
-            // TODO(you): identical soft-wired graph to the baseline plugin (see ../../src/DrakesOmniConfig.cs) —
-            // keep the two Awake() methods in sync when either changes, same as the Compile lists.
             var mainConfig = new MainConfig(Config);
+            ModLog.Init(Logger, mainConfig.MinimumLogLevel.Value);
             var loader = new ModletLoader();
             var resolver = new ConflictResolver();
             var modletManager = new ModletManager(loader, resolver);
@@ -38,6 +37,8 @@ namespace DrakesOmniConfig
             var fieldPatcher = new FieldPatcher(fieldRegistry);
             var authority = new ModletAuthority();
             _orchestrator = new ModletOrchestrator(modletManager, fieldPatcher, authority);
+
+            _orchestrator.Bootstrap(mainConfig.ModletsFolder.Value);
 
             // TODO(you): Tools-only init goes here once Tools.ConsoleCommands / Tools.HtmlHelper exist.
 
