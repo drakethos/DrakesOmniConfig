@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-beta.2
+- Fix: the release zip didn't include `YamlDotNet.dll` (not ILRepack-merged, unlike `ServerSync.dll`),
+  so a clean install of 0.1.0-beta.1 threw a `TypeLoadException` on startup and loaded no modlets.
+  The zip now carries every non-BepInEx dependency DLL alongside the plugin DLL.
+
 ## 0.1.0-beta.1
 - Server/host now resolves modlets once and publishes the result to clients over a ServerSync
   channel; clients adopt what the server sends instead of resolving their own modlets locally.

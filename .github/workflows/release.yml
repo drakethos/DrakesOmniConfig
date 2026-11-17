@@ -130,6 +130,14 @@ jobs:
 
           mkdir -p "$PKG_DIR"
           cp bin/Release/DrakesOmniConfig.dll "$PKG_DIR/"
+          # Non-BepInEx dependency DLLs (e.g. YamlDotNet) that aren't ILRepack-merged must ship alongside the plugin DLL.
+          for dep in bin/Release/*.dll; do
+            base="$(basename "$dep")"
+            case "$base" in
+              DrakesOmniConfig.dll|0Harmony.dll|BepInEx.dll) continue ;;
+            esac
+            cp "$dep" "$PKG_DIR/"
+          done
           cp README.md                       "$PKG_DIR/"
           cp icon.png                        "$PKG_DIR/" 2>/dev/null || true
           cp CHANGELOG.md                    "$PKG_DIR/"

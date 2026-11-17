@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0-beta.2
+- Fix: the release zip didn't include `YamlDotNet.dll`, so a clean install of 0.1.0-beta.1 threw a
+  `TypeLoadException` on startup and loaded no modlets. See the baseline changelog for detail.
+
 ## 0.1.0-beta.1
 - Same sync change as `DrakesOmniConfig` 0.1.0-beta.1 (see its changelog): this build resolves modlets
   and publishes them to connected clients over ServerSync.
