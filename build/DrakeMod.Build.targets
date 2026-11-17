@@ -184,7 +184,7 @@
     <!-- MSBuild string Replace() is not reliable for JSON-escaping a literal " here: on non-Windows
          runners it corrupts any backslash in the replacement (e.g. \" comes out as /"), which is
          exactly the kind of character a Description can contain. Let a real JSON serializer do it. -->
-    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)scripts\Write-ThunderstoreManifest.py&quot; &quot;$(_ManifestPath)&quot;"
+    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory.Replace('\', '/'))scripts/Write-ThunderstoreManifest.py&quot; &quot;$(_ManifestPath)&quot;"
           EnvironmentVariables="MOD_NAME=$(ThunderstoreName);MOD_VERSION=$(Version);MOD_AUTHOR=$(ThunderstoreAuthor);MOD_DESCRIPTION=$(Description);MOD_WEBSITE=$(WebsiteUrl);MOD_DEPENDENCIES=$(_DependencyIds)" />
   </Target>
   <!-- Keep the in-house test profiles' DrakesTestLab suites current: after a local deploy, copy the mod's Tests\suites\*
