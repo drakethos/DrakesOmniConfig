@@ -177,11 +177,14 @@
       <_ManifestDir Condition="'$(ThunderstoreManifestDir)' != ''">$(ThunderstoreManifestDir)</_ManifestDir>
       <_ManifestDir Condition="'$(_ManifestDir)' == ''">$(ThunderstoreFolder)</_ManifestDir>
       <_ManifestPath>$(_ManifestDir)\manifest.json</_ManifestPath>
-      <!-- JSON-escape: backslash first, then double quotes, so a literal " in e.g. Description doesn't break the manifest. -->
-      <_JsonName>$(ThunderstoreName.Replace('\', '\\').Replace('"', '\"'))</_JsonName>
-      <_JsonAuthor>$(ThunderstoreAuthor.Replace('\', '\\').Replace('"', '\"'))</_JsonAuthor>
-      <_JsonDescription>$(Description.Replace('\', '\\').Replace('"', '\"'))</_JsonDescription>
-      <_JsonWebsiteUrl>$(WebsiteUrl.Replace('\', '\\').Replace('"', '\"'))</_JsonWebsiteUrl>
+      <!-- JSON-escape double quotes so a literal " in e.g. Description doesn't break the manifest.
+           Not escaping backslash: MSBuild's Replace('\', '\\') gets mangled by path-separator
+           normalization on non-Windows runners (it turns into a bare '/'), and none of these
+           fields contain a literal backslash in practice. -->
+      <_JsonName>$(ThunderstoreName.Replace('"', '\"'))</_JsonName>
+      <_JsonAuthor>$(ThunderstoreAuthor.Replace('"', '\"'))</_JsonAuthor>
+      <_JsonDescription>$(Description.Replace('"', '\"'))</_JsonDescription>
+      <_JsonWebsiteUrl>$(WebsiteUrl.Replace('"', '\"'))</_JsonWebsiteUrl>
       <_ManifestContent>{&#xD;&#xA;    "name": "$(_JsonName)",&#xD;&#xA;    "version_number": "$(Version)",&#xD;&#xA;    "author": "$(_JsonAuthor)",&#xD;&#xA;    "description": "$(_JsonDescription)",&#xD;&#xA;    "website_url": "$(_JsonWebsiteUrl)",&#xD;&#xA;    "dependencies": [ $(ThunderstoreDependenciesJson) ]&#xD;&#xA;}</_ManifestContent>
     </PropertyGroup>
     <MakeDir Directories="$(_ManifestDir)" />
