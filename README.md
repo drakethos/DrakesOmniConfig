@@ -24,8 +24,9 @@ For the full schema, every option, and worked examples, see **[DrakesOmniConfigS
 ## Install
 
 Drop it in your `BepInEx/plugins` folder (or install via your mod manager) on **every client** that joins a
-server using DrakesOmniConfig modlets. It has no settings you need to touch — the modlets themselves (or,
-once server sync ships, the server) drive everything.
+server using DrakesOmniConfig modlets. It has no settings you need to touch — if the server/host is running
+`DrakesOmniConfigServer`, it publishes its resolved modlets and this build just adopts them; otherwise this
+build reads its own local `Modlets/` folder.
 
 ## Client vs. Server
 
@@ -38,12 +39,13 @@ once server sync ships, the server) drive everything.
 
 They intentionally use **different BepInEx GUIDs** (`com.drakemods.omniconfig` vs.
 `com.drakemods.omniconfigserver`) — Valheim's own mod-compatibility check matches on GUID, and these two are
-meant to never both be present in the same game process. Once server sync ships (see the roadmap in the
-Server build), the two will talk to each other over their own handshake, not GUID matching, which is exactly
-why the GUIDs are allowed to differ.
+meant to never both be present in the same game process. They talk to each other over their own ServerSync
+handshake, not GUID matching, which is exactly why the GUIDs are allowed to differ.
 
 ## Status
 
 Local modlets (YAML on disk, applied to your own single-player/hosted game) are implemented and covered by
-an automated test suite. Server→client sync (so a client with *no* local modlets still gets the server's
-overrides automatically) is not implemented yet — see [ROADMAP.md](ROADMAP.md).
+an automated test suite. Server→client sync is implemented: the server/host resolves its modlets once and
+publishes them, and a client with *no* local modlets of its own adopts whatever the server sends. See
+[ROADMAP.md](ROADMAP.md) for what's still ahead (group/category selectors, console commands, node-based
+scripting).

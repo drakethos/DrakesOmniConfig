@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-beta.1
+- Server/host now resolves modlets once and publishes the result to clients over a ServerSync
+  channel; clients adopt what the server sends instead of resolving their own modlets locally.
+  Pairs with `DrakesOmniConfigServer`.
+- Not yet implemented: `Group`/`Category`/`Blanket` selector matching, console commands.
+  See [ROADMAP.md](ROADMAP.md).
+
 ## 0.1.0
 - Load and apply YAML modlets from `BepInEx/config/DrakesOmniConfig/Modlets/` — declarative field overrides
   on items, pieces, and the player, no custom code per tweak.

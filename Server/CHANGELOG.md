@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0-beta.1
+- Same sync change as `DrakesOmniConfig` 0.1.0-beta.1 (see its changelog): this build resolves modlets
+  and publishes them to connected clients over ServerSync.
+
 ## 0.1.0
 - Same modlet engine as `DrakesOmniConfig` 0.1.0 (see its changelog) — this build is for authoring/testing,
   not for regular players.

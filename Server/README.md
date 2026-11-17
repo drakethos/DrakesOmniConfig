@@ -289,9 +289,8 @@ Honest status, not aspirational — see [ROADMAP.md](../ROADMAP.md) for the full
 - **`Group`/`Category`/`Blanket` selector *matching* isn't implemented** — `groups.yaml` parses, but nothing
   in the engine matches a target against a group yet, and `Category`'s taxonomy hasn't even been designed.
   `Item` and `NamePattern` (Prefab scope only) are the only two that actually work end to end today.
-- **Server→client sync isn't implemented.** Right now, every machine (including a dedicated server) needs
-  its *own* copy of the modlets in its own `Modlets/` folder — a joined client with no local modlets will
-  not automatically receive the server's. This is the next major phase.
+- **Server→client sync is implemented.** The server/host resolves its modlets once and publishes the result
+  over ServerSync; a joined `DrakesOmniConfig` client with no local modlets adopts whatever the server sent.
 - **Console commands are a reserved placeholder**, not yet built.
 - The node-based scripting system (hooking arbitrary Harmony patch points visually, mentioned in the
   client README as "later") hasn't been designed yet — it's a deliberately later phase.
