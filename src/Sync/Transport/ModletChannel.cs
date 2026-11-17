@@ -1,28 +1,33 @@
 using System;
+using ServerSync;
 
 namespace DrakesOmniConfig.Sync.Transport;
 
 /// <summary>
-/// One ServerSync.dll CustomSyncedValue&lt;string&gt; per modlet id — deliberately NOT one channel for
-/// the whole modlet set, so republishing one modlet never resends everyone else's.
-/// TODO(you): wire the actual ServerSync.dll embedding (libs/ServerSync.dll + ILRepack.targets +
-/// ILRepack.Lib.MSBuild.Task NuGet package — see BetterRepair for the exact pattern, including the
-/// Patch-ServerSyncEverybody.ps1 Valheim-1.0 compat fix). Not referenced in this project yet.
+/// Wraps ONE ServerSync.dll CustomSyncedValue&lt;string&gt;. Originally designed as one channel PER
+/// modlet id, but that ran into a real protocol constraint confirmed by decompiling ServerSync.dll:
+/// CustomSyncedValue/ConfigEntry identifiers are a fixed, statically-known set on both sides — a client
+/// that has never heard of a modlet id can't pre-register a channel for it, and a channel the client
+/// doesn't recognize just gets logged as "unknown" and skipped (not fatal, but it also never arrives).
+/// Simplest robust fix: ONE shared channel carrying the WHOLE resolved-override set as one payload, so
+/// there's nothing to discover ahead of time — see ModletAuthority for how it's used.
 /// </summary>
 internal sealed class ModletChannel
 {
-    public string ModletId { get; }
+    private readonly CustomSyncedValue<string> _value;
 
-    public ModletChannel(string modletId)
+    public ModletChannel(ConfigSync sync, string identifier)
     {
-        ModletId = modletId;
+        _value = new CustomSyncedValue<string>(sync, identifier, "");
+        _value.ValueChanged += () => Received?.Invoke(_value.Value);
     }
 
-    /// <summary>Server/authoritative side only. Payload is the already-resolved override set, serialized — never raw modlet files.</summary>
-    public void Publish(string serializedResolvedOverrides)
+    /// <summary>Authoritative side only. Setting .Value is what triggers ServerSync's own distribution to peers.</summary>
+    public void Publish(string payload)
     {
+        _value.Value = payload;
     }
 
-    /// <summary>Client side only. Fires once when this modlet's value arrives/changes — never polled.</summary>
+    /// <summary>Fires whenever the value changes — on the authoritative side too (harmless; unused there).</summary>
     public event Action<string>? Received;
 }

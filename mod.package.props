@@ -10,8 +10,12 @@
     <BepInPluginName>DrakesOmniConfig</BepInPluginName>
     <BepInGuid>com.drakemods.omniconfig</BepInGuid>
     <ModInfoClass>DrakesOmniConfigPlugin</ModInfoClass>
-    <Description>Config anything in Valheim without the bs slow down etc. Stub — not yet implemented.</Description>
+    <Description>A declarative config/modding engine: write YAML "modlets" instead of a separate mod per tweak. Server-synced.</Description>
     <WebsiteUrl>https://github.com/drakethos/DrakesOmniConfig</WebsiteUrl>
+    <!-- Stand-alone (no DrakeModsLibs): ServerSync is merged into this DLL (ILRepack.targets). -->
+    <EmbedServerSync>true</EmbedServerSync>
+    <!-- Deploy/package AFTER the merge, so the copied/packaged DLL already carries ServerSync. -->
+    <DeployAfterTargets>ILRepacker</DeployAfterTargets>
   </PropertyGroup>
   <!-- No mod dependencies yet (no Jotunn, no DrakeModsLibs). Add ThunderstoreDependency entries here if that changes. -->
   <ItemGroup>

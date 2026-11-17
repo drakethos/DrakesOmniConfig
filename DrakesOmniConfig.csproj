@@ -3,6 +3,9 @@
   <PropertyGroup>
     <SolutionDir Condition="'$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined*'">$(MSBuildProjectDirectory)\</SolutionDir>
   </PropertyGroup>
+  <!-- Merges ServerSync into this DLL so there's nothing extra to deploy (EmbedServerSync=true, mod.package.props) -->
+  <Import Project="packages\ILRepack.Lib.MSBuild.Task.2.0.43\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.43\build\ILRepack.Lib.MSBuild.Task.targets')" />
+  <Import Project="ILRepack.targets" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -63,6 +66,10 @@
     <Reference Include="YamlDotNet">
       <HintPath>packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
     </Reference>
+    <!-- Phase D: merged into DrakesOmniConfig.dll by ILRepack.targets (no ServerSync.dll ships). -->
+    <Reference Include="ServerSync">
+      <HintPath>libs\ServerSync.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -94,6 +101,7 @@
     <Compile Include="src\Engine\Node\NodeLoader.cs" />
     <Compile Include="src\Engine\DynamicPatcher\HarmonyHookGen.cs" />
     <Compile Include="src\Sync\Transport\ModletChannel.cs" />
+    <Compile Include="src\Sync\Transport\ResolvedOverrideSerializer.cs" />
     <Compile Include="src\Sync\Authority\ModletAuthority.cs" />
     <Compile Include="src\Tools\TestHooks\OmniConfigTestHooks.cs" />
   </ItemGroup>
@@ -113,7 +121,11 @@
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="PackageMod" AfterTargets="Build" DependsOnTargets="ResolveThunderstorePaths;WriteThunderstoreManifest" Condition="'$(SkipPackageMod)' != 'true'">
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.43\build\ILRepack.Lib.MSBuild.Task.targets')" Text="Restore NuGet packages (ILRepack)." />
+  </Target>
+  <!-- After ILRepack, so the packaged DLL already carries ServerSync. -->
+  <Target Name="PackageMod" AfterTargets="ILRepacker" DependsOnTargets="ResolveThunderstorePaths;WriteThunderstoreManifest" Condition="'$(SkipPackageMod)' != 'true'">
     <!-- Gale/r2modman keep folder structure only under plugins/ (patchers/ monomod/ core/ config/): DLL lives there; manifest.json, icon.png, README.md and CHANGELOG.md sit at the zip root. -->
     <MakeDir Directories="$(ThunderstoreFolder)\plugins" />
     <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(ThunderstoreFolder)\plugins" />

@@ -10,8 +10,12 @@
     <BepInPluginName>DrakesOmniConfigServer</BepInPluginName>
     <BepInGuid>com.drakemods.omniconfigserver</BepInGuid>
     <ModInfoClass>DrakesOmniConfigServerPlugin</ModInfoClass>
-    <Description>Server/admin build of DrakesOmniConfig: same engine, plus tools for building and testing modlets. Standalone — do not install alongside DrakesOmniConfig. Stub — not yet implemented.</Description>
+    <Description>Server/admin build of DrakesOmniConfig: same engine, plus tools for authoring and testing modlets. Standalone — do not install alongside DrakesOmniConfig.</Description>
     <WebsiteUrl>https://github.com/drakethos/DrakesOmniConfig</WebsiteUrl>
+    <!-- Stand-alone (no DrakeModsLibs): ServerSync is merged into this DLL (ILRepack.targets). -->
+    <EmbedServerSync>true</EmbedServerSync>
+    <!-- Deploy/package AFTER the merge, so the copied/packaged DLL already carries ServerSync. -->
+    <DeployAfterTargets>ILRepacker</DeployAfterTargets>
   </PropertyGroup>
   <!-- Standalone, same as the baseline build: no dependency on DrakesOmniConfig itself, no Jotunn, no DrakeModsLibs. -->
   <ItemGroup>
