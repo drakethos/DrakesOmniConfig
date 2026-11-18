@@ -1,0 +1,30 @@
+{
+  "name": "NR-99 cleanup: rules.delete removes the test rules",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.delete",
+        "arg": "com.drakemods.nodetest/node-tests"
+      },
+      "expect": true,
+      "label": "deleted"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.nodetest"
+      },
+      "expect": 0,
+      "label": "no test rules left"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DrakesOmniConfig — Rules</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #1e1e22; color: #ddd; font-size: 13px; }
+  header { padding: 10px 16px; background: #141417; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header nav a { color: #9bc; text-decoration: none; margin-right: 10px; }
+  header nav a.here { color: #fff; border-bottom: 2px solid #4d7fae; }
+  #status { color: #9a9; font-size: 12px; }
+  main { display: grid; grid-template-columns: 240px 1fr 360px; gap: 1px; background: #333; height: calc(100vh - 49px); }
+  section { background: #1e1e22; overflow-y: auto; padding: 10px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin: 12px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  input[type=text], input[type=number], select, textarea { width: 100%; padding: 5px 7px; background: #141417; border: 1px solid #333; color: #ddd; border-radius: 4px; font: inherit; }
+  textarea { font-family: Consolas, monospace; font-size: 12px; height: 220px; }
+  button { padding: 6px 11px; border: none; border-radius: 4px; background: #35506b; color: #fff; cursor: pointer; font-size: 12px; }
+  button:hover { background: #40607f; }
+  button.secondary { background: #333; }
+  button.secondary:hover { background: #444; }
+  button.danger { background: #5a2a2a; }
+  button.danger:hover { background: #733535; }
+  button.small { padding: 2px 7px; font-size: 11px; }
+  .muted { color: #777; font-size: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > .grow { flex: 1; }
+
+  /* palette */
+  .pal { padding: 5px 8px; margin: 2px 0; border-radius: 4px; cursor: grab; border-left: 3px solid; background: #25252b; }
+  .pal:hover { background: #2e2e36; }
+  .pal small { display: block; color: #888; font-size: 11px; }
+  .k-trigger { border-color: #c9a13b; }
+  .k-condition { border-color: #4d9e8a; }
+  .k-action { border-color: #4d7fae; }
+
+  /* canvas */
+  .rule { background: #232328; border: 1px solid #36363e; border-radius: 6px; margin-bottom: 12px; }
+  .rule.selected { border-color: #4d7fae; }
+  .rule-head { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid #333; flex-wrap: wrap; }
+  .rule-head input.rid { width: 190px; font-weight: 600; }
+  .rule-head label { color: #999; font-size: 12px; display: flex; gap: 4px; align-items: center; }
+  .rule-head input.cd { width: 64px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; padding: 10px; }
+  .lane { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px; border: 1px dashed #3a3a44; border-radius: 6px; }
+  .lane.active { border-color: #4d7fae; background: #1f2630; }
+  .lane.over { background: #26323f; }
+  .lane-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #777; width: 100%; }
+  .lane-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .arrow { color: #555; font-size: 18px; align-self: center; padding-top: 14px; }
+  .node { min-width: 120px; max-width: 220px; padding: 6px 8px; border-radius: 6px; background: #2b2b33; border-left: 4px solid; cursor: pointer; position: relative; }
+  .node:hover { background: #33333d; }
+  .node.selected { outline: 2px solid #7fb0e0; }
+  .node.bad { box-shadow: 0 0 0 1px #b55 inset; }
+  .node b { display: block; font-size: 12px; }
+  .node .sum { color: #aaa; font-size: 11px; word-break: break-word; }
+  .node .not { color: #e88; font-weight: 700; margin-right: 3px; }
+  .branches { width: 100%; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+  .empty-hint { color: #666; font-size: 11px; padding: 0 4px; }
+
+  /* inspector */
+  .field { margin-bottom: 8px; }
+  .field label { display: block; font-size: 11px; color: #999; margin-bottom: 2px; }
+  .field .help { color: #777; font-size: 11px; margin-top: 2px; }
+  .req::after { content: " *"; color: #e88; }
+  .problems li { color: #e8a; margin-bottom: 3px; }
+  .ok { color: #8c8; }
+  .branch-edit { border: 1px solid #333; border-radius: 4px; padding: 6px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DrakesOmniConfig — Rules</h1>
+  <nav><a href="index.html">Fields</a><a class="here" href="rules.html">Rules</a></nav>
+  <label class="muted">Catalog: <input type="file" id="catalogInput" accept="application/json"></label>
+  <span id="status"></span>
+</header>
+
+<main>
+  <section id="palette">
+    <input type="text" id="palFilter" placeholder="Filter nodes">
+    <h2>Triggers <span class="muted">(when)</span></h2>
+    <div id="palTriggers"></div>
+    <h2>Conditions <span class="muted">(if)</span></h2>
+    <div id="palConditions"></div>
+    <h2>Actions <span class="muted">(do / else)</span></h2>
+    <div id="palActions"></div>
+  </section>
+
+  <section id="canvas">
+    <div class="row" style="margin-bottom:10px">
+      <button id="newRule">+ New rule</button>
+      <button class="secondary" id="loadSample">Load an example</button>
+      <span class="grow"></span>
+      <span class="muted">Click a node to edit it. Click a lane, then a palette node to add it there — or drag nodes onto lanes.</span>
+    </div>
+    <div id="rules"></div>
+  </section>
+
+  <section id="side">
+    <h2>Node</h2>
+    <div id="inspector"><p class="muted">Select a node.</p></div>
+
+    <h2>Check</h2>
+    <div id="problems"></div>
+
+    <h2>Export</h2>
+    <div class="row"><div class="grow"><label class="muted">Modlet id (folder)</label><input type="text" id="modletId" value="admin-rules"></div>
+      <div class="grow"><label class="muted">File name</label><input type="text" id="fileName" value="my-rules"></div></div>
+    <p class="muted">In game (Server build, admin): copy, then press F10 → <b>Paste rules</b>. Or save the file as
+      <code>Modlets/&lt;modlet&gt;/nodes/&lt;file&gt;.yaml</code> on the server.</p>
+    <div class="row" style="margin:6px 0"><button id="copyYaml">Copy YAML</button><button class="secondary" id="downloadYaml">Download .yaml</button></div>
+    <textarea id="yamlOut" readonly></textarea>
+
+    <h2>Import</h2>
+    <p class="muted">Paste a rules file (or pick one) to edit it here.</p>
+    <textarea id="yamlIn" style="height:110px" placeholder="rules:&#10;  - id: ..."></textarea>
+    <div class="row" style="margin-top:6px"><input type="file" id="yamlFile" accept=".yaml,.yml,text/yaml"><button class="secondary" id="importYaml">Import</button></div>
+  </section>
+</main>
+
+<script type="application/json" id="defaultCatalog">{"schemaVersion":1,"triggers":[{"name":"broke","help":"An equipped item's durability reaches zero.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]},{"name":"consume","help":"The player eats, drinks or uses up a consumable.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]},{"name":"craft","help":"The player crafts or upgrades an item at a station.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]},{"name":"equip","help":"The player equips an item.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]},{"name":"hit","help":"The player hits something with a weapon or tool.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Weapon/tool doing the hitting (pattern). Empty = anything, including bare hands.","choices":[]},{"name":"target","type":"prefab","required":false,"default":"","help":"What got hit: creature, rock, tree or piece prefab name or pattern (Boar, Rock*).","choices":[]}]},{"name":"interval","help":"Every few seconds (optionally only while a matching item is equipped).","shorthand":"","branches":"","args":[{"name":"every","type":"number","required":true,"default":"","help":"Seconds between runs (0.5 or more).","choices":[]},{"name":"item","type":"item","required":false,"default":"","help":"Only while an equipped item matches this pattern. Empty = always.","choices":[]}]},{"name":"pickup","help":"The player picks an item up from the ground.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]},{"name":"spawn","help":"The local player spawns: joining the world or respawning after death.","shorthand":"","branches":"","args":[]},{"name":"unequip","help":"The player unequips an item.","shorthand":"","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name or pattern (Sword*, Club|Torch). Empty = any item.","choices":[]}]}],"conditions":[{"name":"biome","help":"The player is in one of these biomes.","shorthand":"is","branches":"","args":[{"name":"is","type":"biome","required":true,"default":"","help":"Biome name or pattern: Meadows, BlackForest, Swamp, Mountain, Plains, Mistlands, AshLands, DeepNorth, Ocean.","choices":[]}]},{"name":"chance","help":"Passes this percent of the time.","shorthand":"percent","branches":"","args":[{"name":"percent","type":"percent","required":true,"default":"","help":"0-100.","choices":[]}]},{"name":"equipped","help":"Something the player has equipped matches a pattern.","shorthand":"item","branches":"","args":[{"name":"item","type":"item","required":true,"default":"","help":"Item prefab name or pattern.","choices":[]}]},{"name":"hasItem","help":"The player carries at least this many of an item.","shorthand":"item","branches":"","args":[{"name":"item","type":"item","required":true,"default":"","help":"Item prefab name.","choices":[]},{"name":"amount","type":"number","required":false,"default":"1","help":"How many.","choices":[]}]},{"name":"health","help":"The player's health is below and/or above a value (number, or % of max).","shorthand":"below","branches":"","args":[{"name":"below","type":"percent","required":false,"default":"","help":"Passes when health is under this (e.g. 30%).","choices":[]},{"name":"above","type":"percent","required":false,"default":"","help":"Passes when health is over this.","choices":[]}]},{"name":"item","help":"The event's item matches a pattern.","shorthand":"pattern","branches":"","args":[{"name":"pattern","type":"item","required":true,"default":"","help":"Item prefab name or pattern.","choices":[]}]},{"name":"quality","help":"The event's item quality (upgrade level) is within a range.","shorthand":"min","branches":"","args":[{"name":"min","type":"number","required":false,"default":"1","help":"Lowest quality that passes.","choices":[]},{"name":"max","type":"number","required":false,"default":"","help":"Highest quality that passes (empty = no limit).","choices":[]}]},{"name":"target","help":"What was hit matches a pattern (hit trigger).","shorthand":"pattern","branches":"","args":[{"name":"pattern","type":"prefab","required":true,"default":"","help":"Prefab name or pattern.","choices":[]}]},{"name":"time","help":"It is day or night.","shorthand":"is","branches":"","args":[{"name":"is","type":"choice","required":true,"default":"day","help":"day or night.","choices":["day","night"]}]}],"actions":[{"name":"damage","help":"Damage the player (number, or % of max health). Armor does not reduce it.","shorthand":"amount","branches":"","args":[{"name":"amount","type":"percent","required":true,"default":"","help":"e.g. 10 or 10%.","choices":[]}]},{"name":"durability","help":"Change the event's item durability: +25, -10%, =100%.","shorthand":"change","branches":"","args":[{"name":"change","type":"text","required":true,"default":"","help":"+N / -N / =N, with % meaning percent of max durability.","choices":[]}]},{"name":"effect","help":"Play a visual/sound effect prefab at the player (vfx_..., sfx_..., fx_...).","shorthand":"prefab","branches":"","args":[{"name":"prefab","type":"prefab","required":true,"default":"","help":"Effect prefab name.","choices":[]}]},{"name":"give","help":"Give the player an item (dropped at their feet if the inventory is full).","shorthand":"item","branches":"","args":[{"name":"item","type":"item","required":true,"default":"","help":"Item prefab name.","choices":[]},{"name":"amount","type":"number","required":false,"default":"1","help":"How many.","choices":[]},{"name":"quality","type":"number","required":false,"default":"1","help":"Quality (upgrade level).","choices":[]}]},{"name":"heal","help":"Heal the player (number, or % of max health).","shorthand":"amount","branches":"","args":[{"name":"amount","type":"percent","required":true,"default":"","help":"e.g. 25 or 25%.","choices":[]}]},{"name":"message","help":"Show a short message. Text can use {item}, {itemId}, {player}, {target}.","shorthand":"text","branches":"","args":[{"name":"text","type":"text","required":true,"default":"","help":"What to show.","choices":[]},{"name":"where","type":"choice","required":false,"default":"center","help":"center or corner.","choices":["center","corner"]}]},{"name":"popup","help":"Open a window. Each button can run its own actions. Text can use {item}, {itemId}, {player}, {target}.","shorthand":"text","branches":"buttons","args":[{"name":"title","type":"text","required":false,"default":"Notice","help":"Window title.","choices":[]},{"name":"text","type":"text","required":true,"default":"","help":"Body text.","choices":[]}]},{"name":"remove","help":"Take an item from the player's inventory.","shorthand":"item","branches":"","args":[{"name":"item","type":"item","required":false,"default":"","help":"Item prefab name. Empty = the event's own item.","choices":[]},{"name":"amount","type":"number","required":false,"default":"1","help":"How many.","choices":[]}]},{"name":"removeStatus","help":"Remove a status effect from the player.","shorthand":"effect","branches":"","args":[{"name":"effect","type":"statusEffect","required":true,"default":"","help":"Status effect name.","choices":[]}]},{"name":"skill","help":"Raise one of the player's skills.","shorthand":"skill","branches":"","args":[{"name":"skill","type":"skill","required":true,"default":"","help":"Skill name: Swords, Axes, Pickaxes, WoodCutting, Run, Jump, Sneak, Blocking, Bows, ...","choices":[]},{"name":"amount","type":"number","required":false,"default":"1","help":"Experience to add.","choices":[]}]},{"name":"spawn","help":"Spawn a prefab (creature, item, object) in front of the player.","shorthand":"prefab","branches":"","args":[{"name":"prefab","type":"prefab","required":true,"default":"","help":"Prefab name.","choices":[]},{"name":"amount","type":"number","required":false,"default":"1","help":"How many.","choices":[]},{"name":"distance","type":"number","required":false,"default":"2","help":"Metres in front of the player.","choices":[]}]},{"name":"stamina","help":"Change stamina: +20, -15, =100%.","shorthand":"change","branches":"","args":[{"name":"change","type":"text","required":true,"default":"","help":"+N / -N / =N, with % meaning percent of max stamina.","choices":[]}]},{"name":"status","help":"Give the player a status effect (Rested, Wet, Burning, Potion_health_minor, ...).","shorthand":"effect","branches":"","args":[{"name":"effect","type":"statusEffect","required":true,"default":"","help":"Status effect name.","choices":[]},{"name":"duration","type":"number","required":false,"default":"","help":"Seconds (empty = the effect's own length).","choices":[]}]}],"items":[],"statusEffects":["AdrenalineRush","AdrenalineRush2","AdrenalineRush3","AdrenalineRush4","BeltStrength","Burning","CampFire","Cold","CorpseRun","Crowned","Demister","Encumbered","Freezing","Frost","GoblinShaman_shield","GP_Bonemass","GP_Eikthyr","GP_Fader","GP_Moder","GP_Queen","GP_TheElder","GP_Yagluth","GrapplingHook","Harpooned","Immobilized","ImmobilizedAshlands","ImmobilizedLong","Lightning","Poison","Potion_barleywine","Potion_BugRepellent","Potion_bzerker","Potion_eitr_lingering","Potion_eitr_minor","Potion_frostresist","Potion_hasty","Potion_health_lingering","Potion_health_major","Potion_health_medium","Potion_health_minor","Potion_LightFoot","Potion_poisonresist","Potion_stamina_lingering","Potion_stamina_medium","Potion_stamina_minor","Potion_strength","Potion_swimmer","Potion_tamer","Potion_tasty","Potion_TrollPheromones","Puke","Rested","Resting","SetEffect_AshlandsMediumArmor","SetEffect_BerserkerArmor","SetEffect_BerserkerUndeadArmor","SetEffect_DeepNorthMediumArmor","SetEffect_FenringArmor","SetEffect_FishingHat","SetEffect_HarvesterArmor","SetEffect_LoxArmor","SetEffect_MageArmor","SetEffect_RootArmor","SetEffect_TrollArmor","SetEffect_WolfArmor","SE_Drake_Shopkeeper","SE_Dvergr_buff","SE_Dvergr_heal","SE_Greydwarf_shaman_frozen_heal","SE_Greydwarf_shaman_heal","Shelter","Slimed","SlowFall","Smoked","SoftDeath","Spirit","Staff_FrostOrbs","Staff_shield","Tared","TrinketBlackDamageHealth","TrinketBlackStamina","TrinketBloodGoldHealth","TrinketBloodGoldStamina","TrinketBronzeHealth","TrinketBronzeStamina","TrinketCarapaceEitr","TrinketChitinSwim","TrinketFlametalEitr","TrinketFlametalStaminaHealth","TrinketIronHealth","TrinketIronStamina","TrinketScaleStaminaDamage","TrinketSilverDamage","TrinketSilverResist","Warm","Wet","WindRun","Wishbone"],"skills":["Axes","Blocking","BloodMagic","Bows","Clubs","Cooking","Crafting","Crossbows","Dodge","ElementalMagic","Farming","Fishing","Jump","Knives","Pickaxes","Polearms","Ride","Run","Sneak","Spears","Swim","Swords","Unarmed","WoodCutting"],"biomes":["AshLands","BlackForest","DeepNorth","Land","Meadows","Mistlands","Mountain","Ocean","Plains","Swamp"]}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script>
+'use strict';
+// ---------------------------------------------------------------- catalog
+let catalog = JSON.parse(document.getElementById('defaultCatalog').textContent);
+let catalogSource = 'built-in snapshot (no item list)';
+const byKind = () => ({
+  trigger: new Map(catalog.triggers.map(d => [d.name, d])),
+  condition: new Map(catalog.conditions.map(d => [d.name, d])),
+  action: new Map(catalog.actions.map(d => [d.name, d]))
+});
+let defs = byKind();
+
+function setCatalog(text, source) {
+  try {
+    const c = JSON.parse(text);
+    if (!c.triggers || !c.actions) throw new Error('not a NodeCatalog.json');
+    catalog = c; defs = byKind(); catalogSource = source;
+    renderAll();
+  } catch (e) { setStatus('Could not read that catalog: ' + e.message, true); }
+}
+document.getElementById('catalogInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => setCatalog(r.result, f.name); r.readAsText(f);
+});
+(function tryAutoLoad() {
+  if (typeof fetch !== 'function') return;
+  fetch('../NodeCatalog.json').then(r => r.ok ? r.text() : Promise.reject()).then(t => setCatalog(t, 'auto-loaded NodeCatalog.json')).catch(() => {});
+})();
+
+function setStatus(text, bad) {
+  const s = document.getElementById('status');
+  s.textContent = text; s.style.color = bad ? '#e88' : '#9a9';
+}
+
+// ---------------------------------------------------------------- model
+// rule: { id, enabled, cooldown, trigger: {type, args}, if: [step], do: [step], else: [step] }
+// step: { type, args: {}, not?: bool, branches?: [{ label, steps: [step] }] }
+let rules = [];
+let sel = null;   // { rule, list, index } — the selected node (list === null means the trigger)
+let lane = null;  // { rule, list, kind } — where a palette click adds
+
+const save = () => { try { localStorage.setItem('omniRules', JSON.stringify({ rules, modlet: val('modletId'), file: val('fileName') })); } catch (e) {} };
+const val = id => document.getElementById(id).value.trim();
+
+function newRule(id) {
+  return { id: id || uniqueId('my-rule'), enabled: true, cooldown: 0, trigger: null, if: [], do: [], else: [] };
+}
+function uniqueId(base) {
+  let n = 1, id = base;
+  while (rules.some(r => r.id === id)) id = base + '-' + (++n);
+  return id;
+}
+function newStep(kind, type) {
+  const d = defs[kind].get(type);
+  const s = { type, args: {} };
+  if (d) d.args.forEach(a => { if (a.default !== '' && a.required) s.args[a.name] = a.default; });
+  if (d && d.branches) s.branches = [{ label: 'OK', steps: [] }];
+  return s;
+}
+
+// ---------------------------------------------------------------- palette
+document.getElementById('palFilter').addEventListener('input', renderPalette);
+function renderPalette() {
+  const f = val('palFilter').toLowerCase();
+  [['trigger', 'palTriggers', catalog.triggers], ['condition', 'palConditions', catalog.conditions], ['action', 'palActions', catalog.actions]]
+    .forEach(([kind, el, list]) => {
+      const box = document.getElementById(el); box.innerHTML = '';
+      list.filter(d => !f || d.name.toLowerCase().includes(f) || d.help.toLowerCase().includes(f)).forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'pal k-' + kind; div.draggable = true; div.title = d.help;
+        div.innerHTML = `${esc(d.name)}<small>${esc(d.help)}</small>`;
+        div.onclick = () => addFromPalette(kind, d.name);
+        div.ondragstart = ev => ev.dataTransfer.setData('text/plain', kind + ':' + d.name);
+        box.appendChild(div);
+      });
+    });
+}
+
+function addFromPalette(kind, type, target) {
+  let rule = target ? target.rule : (lane ? lane.rule : (sel ? sel.rule : rules[rules.length - 1]));
+  if (!rule) { rule = newRule(); rules.push(rule); }
+  if (kind === 'trigger') {
+    rule.trigger = newStep('trigger', type);
+    sel = { rule, list: null, index: -1 };
+  } else {
+    let list;
+    const t = target || lane;
+    if (t && t.rule === rule && t.kind === kind) list = t.list;
+    else list = kind === 'condition' ? rule.if : rule.do;
+    list.push(newStep(kind, type));
+    sel = { rule, list, index: list.length - 1, kind };
+  }
+  renderAll();
+}
+
+// ---------------------------------------------------------------- canvas
+function renderRules() {
+  const box = document.getElementById('rules'); box.innerHTML = '';
+  if (rules.length === 0) { box.innerHTML = '<p class="muted">No rules yet. Start with “+ New rule”, then pick a trigger.</p>'; return; }
+  rules.forEach((rule, ri) => {
+    const card = document.createElement('div');
+    card.className = 'rule' + (sel && sel.rule === rule ? ' selected' : '');
+    const head = document.createElement('div'); head.className = 'rule-head';
+    head.innerHTML = `<input type="text" class="rid" value="${attr(rule.id)}" title="Rule id (unique in this modlet)">
+      <label>cooldown s <input type="number" class="cd" min="0" step="1" value="${rule.cooldown || 0}"></label>
+      <label><input type="checkbox" class="en" ${rule.enabled ? 'checked' : ''}> enabled</label>
+      <span style="flex:1"></span>`;
+    head.querySelector('.rid').oninput = e => { rule.id = e.target.value.trim(); renderOutput(); };
+    head.querySelector('.cd').oninput = e => { rule.cooldown = Math.max(0, parseFloat(e.target.value) || 0); renderOutput(); };
+    head.querySelector('.en').onchange = e => { rule.enabled = e.target.checked; renderOutput(); };
+    head.appendChild(btn('Duplicate', 'secondary small', () => { const c = JSON.parse(JSON.stringify(rule)); c.id = uniqueId(rule.id); rules.splice(ri + 1, 0, c); renderAll(); }));
+    head.appendChild(btn('Delete', 'danger small', () => { if (confirm(`Delete rule “${rule.id}”?`)) { rules.splice(ri, 1); sel = null; lane = null; renderAll(); } }));
+    card.appendChild(head);
+
+    const flow = document.createElement('div'); flow.className = 'flow';
+    // trigger
+    const trig = document.createElement('div'); trig.className = 'lane-wrap';
+    trig.innerHTML = '<div class="lane-label">when</div>';
+    const tlane = document.createElement('div'); tlane.className = 'lane';
+    if (rule.trigger) tlane.appendChild(nodeEl(rule, null, -1, rule.trigger, 'trigger'));
+    else tlane.innerHTML = '<span class="empty-hint">pick a trigger →</span>';
+    dropTarget(tlane, { rule, list: null, kind: 'trigger' });
+    trig.appendChild(tlane); flow.appendChild(trig);
+    flow.appendChild(arrow());
+    flow.appendChild(laneEl(rule, rule.if, 'condition', 'if (all must pass)'));
+    flow.appendChild(arrow());
+    flow.appendChild(laneEl(rule, rule.do, 'action', 'do'));
+    card.appendChild(flow);
+    const elseFlow = document.createElement('div'); elseFlow.className = 'flow'; elseFlow.style.paddingTop = '0';
+    elseFlow.appendChild(laneEl(rule, rule.else, 'action', 'else (when a condition fails)'));
+    card.appendChild(elseFlow);
+    box.appendChild(card);
+  });
+}
+
+function laneEl(rule, list, kind, label, compact) {
+  const wrap = document.createElement('div'); wrap.className = 'lane-wrap'; if (!compact) wrap.style.flex = '1';
+  wrap.innerHTML = `<div class="lane-label">${esc(label)}</div>`;
+  const l = document.createElement('div');
+  l.className = 'lane' + (lane && lane.list === list ? ' active' : '');
+  if (list.length === 0) l.innerHTML = `<span class="empty-hint">${kind === 'condition' ? 'no conditions: always runs' : 'click here, then an action'}</span>`;
+  list.forEach((s, i) => {
+    if (i > 0) l.appendChild(arrow('→'));
+    const n = nodeEl(rule, list, i, s, kind);
+    l.appendChild(n);
+    if (s.branches && s.branches.length) {
+      const br = document.createElement('div'); br.className = 'branches';
+      s.branches.forEach(b => br.appendChild(laneEl(rule, b.steps, 'action', `button “${b.label || 'OK'}” does`, true)));
+      l.appendChild(br);
+    }
+  });
+  l.onclick = e => { if (e.target === l || e.target.classList.contains('empty-hint')) { lane = { rule, list, kind }; sel = sel && sel.rule === rule ? sel : null; renderAll(); } };
+  dropTarget(l, { rule, list, kind });
+  wrap.appendChild(l);
+  return wrap;
+}
+
+function nodeEl(rule, list, index, step, kind) {
+  const d = defs[kind].get(step.type);
+  const div = document.createElement('div');
+  const isSel = sel && sel.rule === rule && sel.list === list && sel.index === index;
+  div.className = 'node k-' + kind + (isSel ? ' selected' : '') + (stepProblems(step, kind).length ? ' bad' : '');
+  const summary = Object.entries(step.args).filter(([, v]) => v !== '').map(([k, v]) => `${k}: ${v}`).join(', ');
+  div.innerHTML = `<b>${step.not ? '<span class="not">NOT</span>' : ''}${esc(step.type)}${d ? '' : ' (unknown)'}</b><div class="sum">${esc(summary) || '<i>no args</i>'}</div>`;
+  div.onclick = e => { e.stopPropagation(); sel = { rule, list, index, kind }; if (kind === 'action' && list) lane = { rule, list, kind }; renderAll(); };
+  return div;
+}
+
+function dropTarget(el, target) {
+  el.ondragover = e => { e.preventDefault(); el.classList.add('over'); };
+  el.ondragleave = () => el.classList.remove('over');
+  el.ondrop = e => {
+    e.preventDefault(); e.stopPropagation(); el.classList.remove('over');
+    const [kind, type] = (e.dataTransfer.getData('text/plain') || '').split(':');
+    if (!type) return;
+    if (kind !== target.kind) { setStatus(`A ${kind} can't go in that lane (it takes ${target.kind}s).`, true); return; }
+    lane = target.list ? target : lane;
+    addFromPalette(kind, type, target);
+  };
+}
+
+// ---------------------------------------------------------------- inspector
+function renderInspector() {
+  const box = document.getElementById('inspector'); box.innerHTML = '';
+  if (!sel) { box.innerHTML = '<p class="muted">Select a node.</p>'; return; }
+  const step = sel.list === null ? sel.rule.trigger : sel.list[sel.index];
+  if (!step) { box.innerHTML = '<p class="muted">Select a node.</p>'; return; }
+  const kind = sel.list === null ? 'trigger' : sel.kind;
+  const d = defs[kind].get(step.type);
+  box.innerHTML = `<p><b>${esc(step.type)}</b> <span class="muted">(${kind} in “${esc(sel.rule.id)}”)</span><br><span class="muted">${esc(d ? d.help : 'This node is not in the loaded catalog.')}</span></p>`;
+  (d ? d.args : Object.keys(step.args).map(n => ({ name: n, type: 'text', help: '' }))).forEach(a => box.appendChild(argField(step, a)));
+  if (kind === 'condition') {
+    const lab = document.createElement('label'); lab.className = 'field';
+    lab.innerHTML = `<input type="checkbox" ${step.not ? 'checked' : ''}> invert (passes when this is NOT true)`;
+    lab.querySelector('input').onchange = e => { step.not = e.target.checked; renderAll(); };
+    box.appendChild(lab);
+  }
+  if (step.branches) box.appendChild(branchEditor(step));
+  if (sel.list) {
+    const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '8px';
+    r.appendChild(btn('◀ Move', 'secondary small', () => move(-1)));
+    r.appendChild(btn('Move ▶', 'secondary small', () => move(1)));
+    r.appendChild(btn('Remove', 'danger small', () => { sel.list.splice(sel.index, 1); sel = null; renderAll(); }));
+    box.appendChild(r);
+  }
+}
+
+function argField(step, a) {
+  const f = document.createElement('div'); f.className = 'field';
+  f.innerHTML = `<label class="${a.required ? 'req' : ''}">${esc(a.name)} <span class="muted">${esc(a.type)}</span></label>`;
+  let input;
+  const lists = { item: catalog.items, statusEffect: catalog.statusEffects, skill: catalog.skills, biome: catalog.biomes };
+  if (a.type === 'choice' && a.choices && a.choices.length) {
+    input = document.createElement('select');
+    input.innerHTML = '<option value=""></option>' + a.choices.map(c => `<option>${esc(c)}</option>`).join('');
+  } else if (a.type === 'bool') {
+    input = document.createElement('select'); input.innerHTML = '<option value=""></option><option>true</option><option>false</option>';
+  } else {
+    input = document.createElement('input'); input.type = 'text';
+    input.placeholder = a.default || (a.type === 'percent' ? 'e.g. 25 or 25%' : '');
+    const list = lists[a.type];
+    if (list && list.length) {
+      const id = 'dl-' + a.type; input.setAttribute('list', id);
+      if (!document.getElementById(id)) {
+        const dl = document.createElement('datalist'); dl.id = id;
+        dl.innerHTML = list.map(v => `<option value="${attr(v)}">`).join('');
+        document.body.appendChild(dl);
+      }
+    }
+  }
+  input.value = step.args[a.name] !== undefined ? step.args[a.name] : '';
+  input.oninput = input.onchange = e => {
+    const v = e.target.value; if (v === '') delete step.args[a.name]; else step.args[a.name] = v;
+    renderRules(); renderOutput();
+  };
+  f.appendChild(input);
+  if (a.help) f.insertAdjacentHTML('beforeend', `<div class="help">${esc(a.help)}</div>`);
+  return f;
+}
+
+function branchEditor(step) {
+  const box = document.createElement('div'); box.className = 'field';
+  box.innerHTML = '<label>Buttons <span class="muted">(each runs its own actions — click its lane, then an action)</span></label>';
+  step.branches.forEach((b, i) => {
+    const r = document.createElement('div'); r.className = 'row branch-edit';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = b.label; inp.className = 'grow';
+    inp.oninput = e => { b.label = e.target.value; renderRules(); renderOutput(); };
+    r.appendChild(inp);
+    r.appendChild(btn('✕', 'danger small', () => { step.branches.splice(i, 1); renderAll(); }));
+    box.appendChild(r);
+  });
+  box.appendChild(btn('+ Button', 'secondary small', () => { step.branches.push({ label: 'Button ' + (step.branches.length + 1), steps: [] }); renderAll(); }));
+  return box;
+}
+
+function move(dir) {
+  const j = sel.index + dir; if (j < 0 || j >= sel.list.length) return;
+  const [s] = sel.list.splice(sel.index, 1); sel.list.splice(j, 0, s); sel.index = j; renderAll();
+}
+
+// ---------------------------------------------------------------- validation
+function stepProblems(step, kind) {
+  const d = defs[kind].get(step.type);
+  if (!d) return [`unknown ${kind} “${step.type}”`];
+  return d.args.filter(a => a.required && !(step.args[a.name] || '').trim()).map(a => `${step.type} needs “${a.name}”`);
+}
+function walk(steps, kind, out, where) {
+  steps.forEach(s => { stepProblems(s, kind).forEach(p => out.push(`${where}: ${p}`)); (s.branches || []).forEach(b => walk(b.steps, 'action', out, where)); });
+}
+function problems() {
+  const out = []; const ids = new Set();
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(val('modletId'))) out.push('Modlet id: letters, digits, . - _ only.');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(val('fileName'))) out.push('File name: letters, digits, . - _ only.');
+  rules.forEach((r, i) => {
+    const w = r.id || `rule #${i + 1}`;
+    if (!r.id) out.push(`rule #${i + 1}: needs an id`);
+    else if (ids.has(r.id)) out.push(`${w}: id used twice`); else ids.add(r.id);
+    if (!r.trigger) out.push(`${w}: needs a trigger`); else stepProblems(r.trigger, 'trigger').forEach(p => out.push(`${w}: ${p}`));
+    if (r.do.length === 0 && r.else.length === 0) out.push(`${w}: needs at least one action`);
+    walk(r.if, 'condition', out, w); walk(r.do, 'action', out, w); walk(r.else, 'action', out, w);
+  });
+  return out;
+}
+
+// ---------------------------------------------------------------- YAML out (the format NodeLoader reads)
+const isNum = v => /^-?\d+(\.\d+)?$/.test(String(v).trim());
+const q = v => isNum(v) ? String(v).trim() : JSON.stringify(String(v));
+function argsMap(args, not) {
+  const parts = Object.entries(args).filter(([, v]) => v !== '').map(([k, v]) => `${k}: ${q(v)}`);
+  if (not) parts.push('not: true');
+  return '{ ' + parts.join(', ') + ' }';
+}
+function stepsYaml(steps, indent) {
+  const p = ' '.repeat(indent); let y = '';
+  steps.forEach(s => {
+    if (s.branches) {
+      y += `${p}- ${s.type}:\n`;
+      Object.entries(s.args).filter(([, v]) => v !== '').forEach(([k, v]) => { y += `${p}    ${k}: ${q(v)}\n`; });
+      const d = defs.action.get(s.type); const key = (d && d.branches) || 'buttons';
+      y += `${p}    ${key}:\n`;
+      s.branches.forEach(b => {
+        y += `${p}      - label: ${q(b.label || 'OK')}\n`;
+        if (b.steps.length) y += `${p}        do:\n` + stepsYaml(b.steps, indent + 10);
+      });
+    } else {
+      y += `${p}- ${s.type}: ${argsMap(s.args, s.not)}\n`;
+    }
+  });
+  return y;
+}
+function toYaml() {
+  let y = '# DrakesOmniConfig node rules — made with the Rules editor.\n';
+  y += `modlet: ${q(val('modletId') || 'admin-rules')}\nfile: ${q(val('fileName') || 'my-rules')}\nrules:\n`;
+  if (rules.length === 0) return y + '  []\n';
+  rules.forEach(r => {
+    y += `  - id: ${q(r.id)}\n`;
+    if (!r.enabled) y += '    enabled: false\n';
+    if (r.cooldown > 0) y += `    cooldown: ${r.cooldown}\n`;
+    const t = r.trigger || { type: 'equip', args: {} };
+    const targs = Object.entries(t.args).filter(([, v]) => v !== '');
+    y += targs.length ? `    when: { event: ${t.type}, ${targs.map(([k, v]) => `${k}: ${q(v)}`).join(', ')} }\n` : `    when: ${t.type}\n`;
+    if (r.if.length) y += '    if:\n' + stepsYaml(r.if, 6);
+    if (r.do.length) y += '    do:\n' + stepsYaml(r.do, 6);
+    if (r.else.length) y += '    else:\n' + stepsYaml(r.else, 6);
+  });
+  return y;
+}
+
+function renderOutput() {
+  document.getElementById('yamlOut').value = toYaml();
+  const p = problems(); const box = document.getElementById('problems');
+  box.innerHTML = p.length ? '<ul class="problems">' + p.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>' : '<p class="ok">No problems found.</p>';
+  setStatus(`${rules.length} rule(s) · catalog: ${catalogSource}`);
+  save();
+}
+
+document.getElementById('copyYaml').onclick = async () => {
+  const text = toYaml();
+  try { await navigator.clipboard.writeText(text); setStatus('Copied. In game: F10 → Paste rules.'); }
+  catch (e) { const t = document.getElementById('yamlOut'); t.select(); document.execCommand('copy'); setStatus('Copied.'); }
+};
+document.getElementById('downloadYaml').onclick = () => {
+  const blob = new Blob([toYaml()], { type: 'text/yaml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (val('fileName') || 'my-rules') + '.yaml'; a.click(); URL.revokeObjectURL(a.href);
+};
+['modletId', 'fileName'].forEach(id => document.getElementById(id).addEventListener('input', renderOutput));
+
+// ---------------------------------------------------------------- YAML in
+document.getElementById('yamlFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { document.getElementById('yamlIn').value = r.result; }; r.readAsText(f);
+});
+document.getElementById('importYaml').onclick = () => {
+  if (typeof jsyaml === 'undefined') { setStatus('Import needs the js-yaml script, which loads from the internet. Connect, then reload this page.', true); return; }
+  let doc;
+  try { doc = jsyaml.load(document.getElementById('yamlIn').value); } catch (e) { setStatus('Not valid YAML: ' + e.message, true); return; }
+  if (!doc || !Array.isArray(doc.rules)) { setStatus('No “rules:” list in that file.', true); return; }
+  try {
+    const loaded = doc.rules.map(fromYamlRule);
+    if (rules.length && !confirm(`Replace the ${rules.length} rule(s) in the editor with ${loaded.length} imported rule(s)?`)) return;
+    rules = loaded; sel = null; lane = null;
+    if (doc.modlet) document.getElementById('modletId').value = doc.modlet;
+    if (doc.file) document.getElementById('fileName').value = doc.file;
+    renderAll(); setStatus(`Imported ${loaded.length} rule(s).`);
+  } catch (e) { setStatus('Could not import: ' + e.message, true); }
+};
+const str = v => v === null || v === undefined ? '' : String(v);
+function fromYamlStep(entry, kind) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error('each node must be a one-key map');
+  const [type, value] = Object.entries(entry)[0];
+  const d = defs[kind].get(type);
+  const s = { type, args: {} };
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    Object.entries(value).forEach(([k, v]) => {
+      if (d && d.branches && k === d.branches) s.branches = (v || []).map(b => ({ label: str(b.label), steps: (b.do || []).map(x => fromYamlStep(x, 'action')) }));
+      else if (k === 'not') s.not = str(v) === 'true';
+      else s.args[k] = str(v);
+    });
+  } else if (value !== null && value !== undefined) {
+    s.args[(d && d.shorthand) || 'value'] = str(value);
+  }
+  if (d && d.branches && !s.branches) s.branches = [];
+  return s;
+}
+function fromYamlRule(r) {
+  const rule = newRule(str(r.id));
+  rule.enabled = r.enabled !== false; rule.cooldown = parseFloat(r.cooldown) || 0;
+  if (typeof r.when === 'string') rule.trigger = { type: r.when, args: {} };
+  else if (r.when) { const { event, ...rest } = r.when; rule.trigger = { type: str(event), args: Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, str(v)])) }; }
+  rule.if = (r.if || []).map(x => fromYamlStep(x, 'condition'));
+  rule.do = (r.do || []).map(x => fromYamlStep(x, 'action'));
+  rule.else = (r.else || []).map(x => fromYamlStep(x, 'action'));
+  return rule;
+}
+
+// ---------------------------------------------------------------- misc
+document.getElementById('newRule').onclick = () => { const r = newRule(); rules.push(r); sel = null; lane = { rule: r, list: r.do, kind: 'action' }; renderAll(); };
+document.getElementById('loadSample').onclick = () => {
+  const r = newRule(uniqueId('lucky-pickaxe'));
+  r.trigger = { type: 'hit', args: { item: 'Pickaxe*', target: 'Rock*|MineRock*' } };
+  r.if = [{ type: 'chance', args: { percent: '10' } }];
+  r.do = [{ type: 'give', args: { item: 'Coins', amount: '3' } }, { type: 'message', args: { text: 'Lucky strike! +3 coins', where: 'corner' } }];
+  const w = newRule(uniqueId('welcome-kit'));
+  w.trigger = { type: 'spawn', args: {} }; w.cooldown = 600;
+  w.if = [{ type: 'hasItem', args: { item: 'Club' }, not: true }];
+  w.do = [{ type: 'popup', args: { title: 'Welcome, {player}!', text: 'Take a starter kit?' }, branches: [
+    { label: 'Take the kit', steps: [{ type: 'give', args: { item: 'Club' } }, { type: 'give', args: { item: 'Torch' } }] },
+    { label: 'No thanks', steps: [] }] }];
+  rules.push(r, w); renderAll();
+};
+function btn(text, cls, fn) { const b = document.createElement('button'); b.textContent = text; b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; return b; }
+function arrow(t) { const s = document.createElement('span'); s.className = 'arrow'; s.textContent = t || '⟶'; return s; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+const attr = esc;
+
+function renderAll() { renderPalette(); renderRules(); renderInspector(); renderOutput(); }
+
+(function restore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('omniRules') || 'null');
+    if (saved && Array.isArray(saved.rules)) {
+      rules = saved.rules;
+      if (saved.modlet) document.getElementById('modletId').value = saved.modlet;
+      if (saved.file) document.getElementById('fileName').value = saved.file;
+    }
+  } catch (e) {}
+  renderAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "NR-04 pickup: picking up guck from the ground runs the pickup rule",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.pickup",
+      "args": {
+        "item": "Guck"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Bloodbag"
+      },
+      "expect": 2,
+      "label": "Bloodbag x2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

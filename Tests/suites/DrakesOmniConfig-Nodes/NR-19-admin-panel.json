@@ -1,0 +1,15 @@
+{
+  "name": "NR-19 admin panel: its Turn off / Turn on buttons switch a rule through the admin path",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.panel", "args": {}, "expect": "OmniConfig — server modlets", "label": "panel open" },
+    { "do": "hook", "name": "omniconfig.popup", "args": { "row": "equip-gives", "click": "Turn off" }, "expect": true, "label": "pressed Turn off on equip-gives" },
+    { "do": "hook", "name": "omniconfig.rules", "args": { "modlet": "com.drakemods.nodetest" }, "expect": 12, "label": "rule is off" },
+    { "do": "hook", "name": "omniconfig.popup", "args": {}, "expect": "OmniConfig — server modlets", "label": "panel stays open" },
+    { "do": "hook", "name": "omniconfig.panel", "args": {}, "expect": "OmniConfig — server modlets" },
+    { "do": "hook", "name": "omniconfig.popup", "args": { "row": "equip-gives", "click": "Turn on" }, "expect": true, "label": "pressed Turn on" },
+    { "do": "hook", "name": "omniconfig.rules", "args": { "modlet": "com.drakemods.nodetest" }, "expect": 13, "label": "rule is on again" },
+    { "do": "hook", "name": "omniconfig.popup", "args": { "click": "Close" }, "expect": true },
+    { "do": "hook", "name": "omniconfig.popup", "args": {}, "expect": "", "label": "panel closed" }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

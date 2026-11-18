@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DrakesOmniConfig.Config.Modlets.Schema;
+using DrakesOmniConfig.Engine.Node.Schema;
 using DrakesOmniConfig.Sync.Transport;
 using ServerSync;
 
@@ -23,16 +24,20 @@ internal sealed class ModletAuthority
 {
     private const string SyncName = "com.drakemods.omniconfig.sync";
     private const string Identifier = "ResolvedOverrides";
+    private const string RulesIdentifier = "NodeRules";
 
-    // The sync WIRE FORMAT's own version — bump only if ResolvedOverrideSerializer's shape changes.
+    // The sync WIRE FORMAT's own version — bump when either payload's shape changes. 2 = node rules added;
+    // a v1 peer would silently ignore the rules channel, so it is refused rather than half-synced.
     // Deliberately NOT either build's own plugin Version: DrakesOmniConfig and DrakesOmniConfigServer
     // are released independently and will drift apart over time.
-    private const string ProtocolVersion = "1";
+    private const string ProtocolVersion = "2";
 
     private readonly ConfigSync _sync;
     private readonly ModletChannel _channel;
+    private readonly ModletChannel _rules;
 
     public event Action<IReadOnlyList<ResolvedOverride>>? ResolvedReceived;
+    public event Action<NodeRuleSet>? RulesReceived;
 
     public ModletAuthority()
     {
@@ -44,12 +49,28 @@ internal sealed class ModletAuthority
         };
         _channel = new ModletChannel(_sync, Identifier);
         _channel.Received += OnReceived;
+        _rules = new ModletChannel(_sync, RulesIdentifier);
+        _rules.Received += OnRulesReceived;
     }
 
     /// <summary>Authoritative side only. Called once at bootstrap and again on every admin-triggered reload.</summary>
     public void PublishAll(IReadOnlyList<ResolvedOverride> resolved)
     {
         _channel.Publish(ResolvedOverrideSerializer.Serialize(resolved));
+    }
+
+    /// <summary>Authoritative side only, alongside <see cref="PublishAll"/>.</summary>
+    public void PublishRules(NodeRuleSet set)
+    {
+        _rules.Publish(NodeRuleSetSerializer.Serialize(set));
+    }
+
+    private void OnRulesReceived(string payload)
+    {
+        if (!string.IsNullOrEmpty(payload))
+        {
+            RulesReceived?.Invoke(NodeRuleSetSerializer.Deserialize(payload));
+        }
     }
 
     private void OnReceived(string payload)

@@ -161,7 +161,7 @@ internal sealed class ModletLoader
 
     // Unknown {name} is left as literal text — downstream parsing (ParseExpression / Enum.Parse) then
     // fails loudly with a clear message rather than this method guessing or throwing blind.
-    private static string SubstituteVariables(string rawText, IReadOnlyDictionary<string, object?> variables)
+    internal static string SubstituteVariables(string rawText, IReadOnlyDictionary<string, object?> variables)
     {
         if (variables.Count == 0)
         {

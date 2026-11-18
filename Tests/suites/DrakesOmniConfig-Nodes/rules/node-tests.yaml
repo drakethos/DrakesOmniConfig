@@ -1,0 +1,81 @@
+# Uploaded by NR-00 (admin rules.put), deleted by NR-99 (admin rules.delete). Deterministic: no chance rolls.
+modlet: com.drakemods.nodetest
+file: node-tests
+rules:
+  - id: equip-gives
+    when: { event: equip, item: FishingRod }
+    do:
+      - give: { item: Thunderstone, amount: 2 }
+      - message: "Rod equipped: {itemId}"
+
+  - id: unequip-gives
+    when: { event: unequip, item: FishingRod }
+    do:
+      - give: { item: Chitin, amount: 3 }
+
+  - id: consume-gives
+    when: { event: consume, item: Pukeberries }
+    do:
+      - give: { item: Ooze, amount: 4 }
+
+  - id: pickup-gives
+    when: { event: pickup, item: Guck }
+    do:
+      - give: { item: Bloodbag, amount: 2 }
+
+  - id: craft-gives
+    when: { event: craft, item: Hoe }
+    do:
+      - give: { item: Amber }
+
+  - id: hit-gives
+    when: { event: hit, target: Deer }
+    do:
+      - give: { item: AmberPearl }
+
+  - id: interval-gives
+    when: { event: interval, every: 1, item: Cultivator }
+    do:
+      - give: { item: Flint }
+
+  - id: branch
+    when: { event: equip, item: KnifeFlint }
+    if:
+      - hasItem: { item: Coins, amount: 5 }
+    do:
+      - give: { item: Ruby }
+    else:
+      - give: { item: SilverNecklace }
+
+  - id: cooldown
+    when: { event: equip, item: SpearFlint }
+    cooldown: 60
+    do:
+      - give: { item: Crystal }
+
+  - id: popup
+    when: { event: equip, item: AxeFlint }
+    do:
+      - popup:
+          title: Node test popup
+          text: "You equipped {itemId}."
+          buttons:
+            - label: Take
+              do:
+                - give: { item: Obsidian }
+            - label: Leave
+
+  - id: durability
+    when: { event: equip, item: AxeStone }
+    do:
+      - durability: "=50%"
+
+  - id: broke
+    when: { event: broke, item: "PickaxeAntler|Torch" }
+    do:
+      - give: { item: TrophyBoar }
+
+  - id: status
+    when: { event: equip, item: MaceBronze }
+    do:
+      - status: { effect: Rested, duration: 120 }

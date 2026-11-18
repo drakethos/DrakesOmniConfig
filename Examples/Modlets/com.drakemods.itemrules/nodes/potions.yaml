@@ -1,0 +1,15 @@
+# Consumables doing a little more: a minor healing mead also tops up stamina, and berries are a gamble.
+rules:
+  - id: mead-stamina
+    when: { event: consume, item: MeadHealthMinor }
+    do:
+      - stamina: "+50%"
+      - message: { text: "The mead puts a spring in your step.", where: corner }
+
+  - id: lucky-berries
+    when: { event: consume, item: "Raspberry|Blueberries" }
+    if:
+      - chance: 5
+    do:
+      - heal: 15
+      - message: { text: "That one was perfectly ripe. +15 health", where: corner }

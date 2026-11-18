@@ -1,0 +1,11 @@
+{
+  "name": "NR-18 editor: a file exported by the HTML Rules editor loads in game",
+  "description": "rules/editor-output.yaml is the editor's exact export (copied from the page). Uploaded like an admin's paste, counted, then removed.",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rules.put", "file": "DrakesOmniConfig-Nodes/rules/editor-output.yaml" }, "expect": true, "label": "server accepted the editor's file" },
+    { "do": "hook", "name": "omniconfig.rules", "args": { "modlet": "com.drakemods.nodetest" }, "expect": 15, "label": "13 test rules + 2 from the editor" },
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rules.delete", "arg": "com.drakemods.nodetest/editor-output" }, "expect": true, "label": "removed again" },
+    { "do": "hook", "name": "omniconfig.rules", "args": { "modlet": "com.drakemods.nodetest" }, "expect": 13 }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

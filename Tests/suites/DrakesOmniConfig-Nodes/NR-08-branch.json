@@ -1,0 +1,81 @@
+{
+  "name": "NR-08 conditions: hasItem picks do or else",
+  "description": "Without 5 coins the else branch runs; with them the do branch runs.",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "KnifeFlint",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "KnifeFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "SilverNecklace"
+      },
+      "expect": 1,
+      "label": "else ran without coins"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Ruby"
+      },
+      "expect": 0,
+      "label": "do did not run"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.unequip",
+      "args": {
+        "item": "KnifeFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "give",
+      "prefab": "Coins",
+      "count": 5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "KnifeFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Ruby"
+      },
+      "expect": 1,
+      "label": "do ran with coins"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

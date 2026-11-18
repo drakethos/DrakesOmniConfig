@@ -1,0 +1,8 @@
+# Hunting rewards: a clean bow hit on game sometimes yields extra leather.
+rules:
+  - id: hunter-bonus
+    when: { event: hit, item: "Bow*", target: "Deer|Boar|Neck" }
+    if:
+      - chance: 25
+    do:
+      - give: { item: LeatherScraps }

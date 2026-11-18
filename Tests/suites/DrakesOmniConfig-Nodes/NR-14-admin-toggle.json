@@ -1,0 +1,66 @@
+{
+  "name": "NR-14 admin: rule.toggle turns a rule off and on again",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rule.toggle",
+        "arg": "com.drakemods.nodetest/equip-gives"
+      },
+      "expect": true,
+      "label": "turned off"
+    },
+    {
+      "do": "give",
+      "prefab": "FishingRod",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "FishingRod"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Thunderstone"
+      },
+      "expect": 0,
+      "label": "rule off: nothing given"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rule.toggle",
+        "arg": "com.drakemods.nodetest/equip-gives"
+      },
+      "expect": true,
+      "label": "turned back on"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.nodetest"
+      },
+      "expect": 13,
+      "label": "all 13 active again"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

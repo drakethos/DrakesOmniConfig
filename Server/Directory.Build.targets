@@ -7,4 +7,14 @@
   <PropertyGroup Condition="'$(CI_SKIP_POST_BUILD)' != ''">
     <SkipPackageMod>true</SkipPackageMod>
   </PropertyGroup>
+  <!-- The Server build compiles against drakeTest's BepInEx (environment.props) but must never be
+       deployed there: drakeTest runs the baseline, and the two builds must not load together. It deploys
+       only to a profile you name: dotnet msbuild Server\DrakesOmniConfigServer.csproj -p:ServerDeployProfile=<profile> -->
+  <PropertyGroup>
+    <GaleModDeployPath Condition="'$(ServerDeployProfile)' == ''"></GaleModDeployPath>
+    <R2ModDeployPath Condition="'$(ServerDeployProfile)' == ''"></R2ModDeployPath>
+    <UpdateR2ModsYml Condition="'$(ServerDeployProfile)' == ''">false</UpdateR2ModsYml>
+    <GaleModDeployPath Condition="'$(ServerDeployProfile)' != ''">$(GaleModPath)\$(ServerDeployProfile)\BepInEx\plugins\$(R2PluginFolder)</GaleModDeployPath>
+    <R2ModDeployPath Condition="'$(ServerDeployProfile)' != ''"></R2ModDeployPath>
+  </PropertyGroup>
 </Project>

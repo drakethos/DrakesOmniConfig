@@ -1,0 +1,71 @@
+{
+  "name": "NR-10 popup: a window opens and its button runs actions",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "AxeFlint",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "AxeFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.dialogMode",
+      "args": {},
+      "expect": "libs",
+      "label": "DrakeModsLibs window in use"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.popup",
+      "args": {},
+      "expect": "Node test popup",
+      "label": "popup open"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.popup",
+      "args": {
+        "click": "Take"
+      },
+      "expect": true,
+      "label": "pressed Take"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.2
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Obsidian"
+      },
+      "expect": 1,
+      "label": "Take ran its give"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.popup",
+      "args": {},
+      "expect": "",
+      "label": "popup closed"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

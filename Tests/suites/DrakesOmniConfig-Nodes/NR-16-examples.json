@@ -1,0 +1,21 @@
+{
+  "name": "NR-16 examples: every shipped example rule parses",
+  "description": "com.drakemods.itemrules ships disabled, so this parses its files directly.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.validate",
+      "args": {
+        "modlet": "com.drakemods.itemrules"
+      },
+      "expect": 8,
+      "label": "8 example rules"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Example node rules: item behaviour without writing a mod. OFF by default so it never changes a server
+# that didn't ask for it. Turn it on with "enabled: true" here, or with the in-game admin panel (F10).
+schemaVersion: 1
+displayName: Item rules (examples)
+enabled: false
+priority: 0

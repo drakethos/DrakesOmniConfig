@@ -1,0 +1,7 @@
+{
+  "name": "DrakesOmniConfig-Nodes",
+  "description": "Node rules end to end. NR-00 uploads rules/node-tests.yaml through the real admin path (parse, save to disk, reload, publish over ServerSync, receive), each test then drives a real game action (equip, consume, pickup, craft, hit, durability) and checks what the rule did, and NR-99 deletes the file again. Trigger items are ones no other suite uses, so a crashed run cannot change other mods' tests.",
+  "requireMods": [ { "guid": "com.drakemods.omniconfig", "minVersion": "0.1.0" } ],
+  "setup": { "timeOfDay": 0.5, "freezeTime": 1, "god": 1, "noBuild": "off", "hideUnlockPopups": 1 },
+  "resetBetweenTests": true
+}

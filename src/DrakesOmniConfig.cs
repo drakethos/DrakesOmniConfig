@@ -6,6 +6,8 @@ using DrakesOmniConfig.Config.Modlets.Management;
 using DrakesOmniConfig.Config.Settings;
 using DrakesOmniConfig.Engine.Fields.Application;
 using DrakesOmniConfig.Engine.Fields.Registry;
+using DrakesOmniConfig.Engine.Node.Library;
+using DrakesOmniConfig.Engine.Node.Runtime;
 using DrakesOmniConfig.Engine.Orchestration;
 using DrakesOmniConfig.Sync.Authority;
 
@@ -23,6 +25,8 @@ namespace DrakesOmniConfig
     /// ServerSync's own RPC-name handshake (Sync.Authority.ModletAuthority), which never checks GUID equality.
     /// </summary>
     
+    // Soft: popups use DrakeModsLibs' window when it is installed, a built-in dialog otherwise. Never required.
+    [BepInDependency("com.drakemods.libs", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(GUID, ModName, Version)]
     public partial class DrakesOmniConfigPlugin : BaseUnityPlugin
     {
@@ -45,6 +49,8 @@ namespace DrakesOmniConfig
             _orchestrator = new ModletOrchestrator(modletManager, fieldPatcher, authority);
 
             _orchestrator.Bootstrap(mainConfig.ModletsFolder.Value);
+            NodeLibrary.RegisterAll();
+            gameObject.AddComponent<NodeTicker>();
             Logger.LogInfo($"{ModName} {Version} Awake.");
         }
     }

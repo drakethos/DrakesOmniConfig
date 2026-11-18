@@ -1,0 +1,18 @@
+{
+  "name": "NR-10b popup without DrakeModsLibs: the built-in dialog opens and its buttons work",
+  "description": "drakeTest has DrakeModsLibs, so NR-10 covers the Libs window; this forces the built-in fallback used on installs without Libs.",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.dialogMode", "args": { "builtin": true }, "expect": true },
+    { "do": "give", "prefab": "AxeFlint", "count": 1 },
+    { "do": "hook", "name": "omniconfig.equip", "args": { "item": "AxeFlint" }, "expect": true },
+    { "do": "wait", "seconds": 0.3 },
+    { "do": "hook", "name": "omniconfig.dialogMode", "args": {}, "expect": "builtin", "label": "built-in dialog in use" },
+    { "do": "hook", "name": "omniconfig.popup", "args": {}, "expect": "Node test popup", "label": "popup open" },
+    { "do": "hook", "name": "omniconfig.popup", "args": { "click": "Leave" }, "expect": true, "label": "pressed Leave" },
+    { "do": "wait", "seconds": 0.2 },
+    { "do": "hook", "name": "omniconfig.count", "args": { "item": "Obsidian" }, "expect": 0, "label": "Leave gave nothing" },
+    { "do": "hook", "name": "omniconfig.popup", "args": {}, "expect": "", "label": "popup closed" },
+    { "do": "hook", "name": "omniconfig.dialogMode", "args": { "builtin": false }, "expect": true }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

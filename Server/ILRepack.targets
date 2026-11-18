@@ -16,7 +16,7 @@
                 InputAssemblies="@(InputAssemblies)"
                 OutputFile="$(TargetDir)ilrepack_stage\$(TargetFileName)"
                 TargetKind="SameAsPrimaryAssembly"
-                LibraryPath="$(OutputPath);$(BepInExPath)\core;$(CorlibPath);$(PublicizedAssembliesPath)" />
+                LibraryPath="$(OutputPath);$(MSBuildProjectDirectory)\libs;$(BepInExPath)\core;$(CorlibPath);$(PublicizedAssembliesPath)" />
 
         <!-- Keep assembly identity DrakeModsLibs.dll (not *.merged) -->
         <Copy SourceFiles="$(TargetDir)ilrepack_stage\$(TargetFileName)"

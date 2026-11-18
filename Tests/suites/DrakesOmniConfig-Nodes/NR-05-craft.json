@@ -1,0 +1,44 @@
+{
+  "name": "NR-05 craft: crafting a hoe at the workbench runs the craft rule",
+  "description": "TestLab's craft step goes through the real InventoryGui.DoCrafting.",
+  "steps": [
+    {
+      "do": "give",
+      "materialsFor": "Hoe",
+      "count": 1
+    },
+    {
+      "do": "craft",
+      "prefab": "Hoe",
+      "count": 1
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Hoe"
+      },
+      "expect": 1,
+      "label": "the hoe was made"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Amber"
+      },
+      "expect": 1,
+      "label": "Amber x1"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

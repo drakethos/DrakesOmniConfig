@@ -1,0 +1,37 @@
+{
+  "name": "NR-03 consume: eating pukeberries runs the consume rule",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Pukeberries",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.consume",
+      "args": {
+        "item": "Pukeberries"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Ooze"
+      },
+      "expect": 4,
+      "label": "Ooze x4"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

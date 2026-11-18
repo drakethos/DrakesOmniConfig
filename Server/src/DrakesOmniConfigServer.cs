@@ -5,8 +5,12 @@ using DrakesOmniConfig.Config.Modlets.Management;
 using DrakesOmniConfig.Config.Settings;
 using DrakesOmniConfig.Engine.Fields.Application;
 using DrakesOmniConfig.Engine.Fields.Registry;
+using DrakesOmniConfig.Engine.Node.Library;
+using DrakesOmniConfig.Engine.Node.Runtime;
 using DrakesOmniConfig.Engine.Orchestration;
 using DrakesOmniConfig.Sync.Authority;
+using DrakesOmniConfig.Tools.AdminPanel;
+using DrakesOmniConfig.Tools.HtmlHelper;
 
 namespace DrakesOmniConfig
 {
@@ -18,6 +22,8 @@ namespace DrakesOmniConfig
     /// Do NOT add [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, ...)] here either — see
     /// the matching note on DrakesOmniConfigPlugin for why the client/server GUID mismatch is intentional.
     /// </summary>
+    // Soft: popups use DrakeModsLibs' window when it is installed, a built-in dialog otherwise. Never required.
+    [BepInDependency("com.drakemods.libs", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(GUID, ModName, Version)]
     public partial class DrakesOmniConfigServerPlugin : BaseUnityPlugin
     {
@@ -39,8 +45,11 @@ namespace DrakesOmniConfig
             _orchestrator = new ModletOrchestrator(modletManager, fieldPatcher, authority);
 
             _orchestrator.Bootstrap(mainConfig.ModletsFolder.Value);
+            NodeLibrary.RegisterAll();
+            gameObject.AddComponent<NodeTicker>();
 
-            // TODO(you): Tools-only init goes here once Tools.ConsoleCommands / Tools.HtmlHelper exist.
+            gameObject.AddComponent<AdminPanel>().Init(Config);
+            ToolFiles.Extract();
 
             Logger.LogInfo($"{ModName} {Version} Awake.");
         }

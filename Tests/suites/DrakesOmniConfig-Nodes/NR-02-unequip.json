@@ -1,0 +1,45 @@
+{
+  "name": "NR-02 unequip: taking the rod off runs its own rule",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "FishingRod",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "FishingRod"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.unequip",
+      "args": {
+        "item": "FishingRod"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Chitin"
+      },
+      "expect": 3,
+      "label": "Chitin x3"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

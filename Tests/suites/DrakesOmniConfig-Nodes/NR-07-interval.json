@@ -1,0 +1,43 @@
+{
+  "name": "NR-07 interval: every second while the cultivator is equipped",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Cultivator",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "Cultivator"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 2.8
+    },
+    {
+      "do": "check",
+      "check": "hasitem",
+      "prefab": "Flint",
+      "count": 2,
+      "label": "at least two ticks"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.unequip",
+      "args": {
+        "item": "Cultivator"
+      },
+      "expect": true
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

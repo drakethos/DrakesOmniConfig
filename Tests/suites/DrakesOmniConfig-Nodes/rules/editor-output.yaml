@@ -1,0 +1,27 @@
+# DrakesOmniConfig node rules — made with the Rules editor.
+modlet: "com.drakemods.nodetest"
+file: "editor-output"
+rules:
+  - id: "lucky-pickaxe"
+    when: { event: hit, item: "Pickaxe*", target: "Rock*|MineRock*" }
+    if:
+      - chance: { percent: 10 }
+    do:
+      - give: { item: "Coins", amount: 3 }
+      - message: { text: "Lucky strike! +3 coins", where: "corner" }
+      - skill: { skill: "Pickaxes" }
+  - id: "welcome-kit"
+    cooldown: 600
+    when: spawn
+    if:
+      - hasItem: { item: "Club", not: true }
+    do:
+      - popup:
+          title: "Welcome, {player}!"
+          text: "Take a starter kit?"
+          buttons:
+            - label: "Take the kit"
+              do:
+                - give: { item: "Club" }
+                - give: { item: "Torch" }
+            - label: "No thanks"

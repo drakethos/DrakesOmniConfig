@@ -1,0 +1,43 @@
+{
+  "name": "NR-01 equip: equipping the rod runs give + message",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "FishingRod",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "FishingRod"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Thunderstone"
+      },
+      "expect": 2,
+      "label": "Thunderstone x2"
+    },
+    {
+      "do": "check",
+      "check": "message",
+      "contains": "Rod equipped: FishingRod",
+      "label": "message shown"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

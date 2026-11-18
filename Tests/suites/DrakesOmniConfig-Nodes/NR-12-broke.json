@@ -1,0 +1,93 @@
+{
+  "name": "NR-12 broke: a tool wearing out runs the broke rule (game path and poll path)",
+  "description": "A torch burns out through Humanoid.DrainEquipedItemDurability, the game's own break (it unequips the torch); a pickaxe set to 0 directly is only visible to the poll.",
+  "setup": {
+    "god": 0
+  },
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Torch",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "Torch"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.6
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.wearOut",
+      "args": {
+        "item": "Torch"
+      },
+      "expect": true,
+      "label": "torch burnt out by the game"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.6
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "TrophyBoar"
+      },
+      "expect": 1,
+      "label": "game-path break fired once"
+    },
+    {
+      "do": "give",
+      "prefab": "PickaxeAntler",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "PickaxeAntler"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.6
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.durability",
+      "args": {
+        "item": "PickaxeAntler",
+        "set": 0
+      },
+      "expect": 0
+    },
+    {
+      "do": "wait",
+      "seconds": 1.0
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "TrophyBoar"
+      },
+      "expect": 2,
+      "label": "poll-path break fired"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

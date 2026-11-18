@@ -26,6 +26,9 @@ installs the client build.
 - [groups.yaml — named sets of ids](#groupsyaml--named-sets-of-ids)
 - [Conflicts: when two modlets touch the same field](#conflicts-when-two-modlets-touch-the-same-field)
 - [Finding real field names: the Config Builder tool](#finding-real-field-names-the-config-builder-tool)
+- [Node rules: make things happen](#node-rules-make-things-happen)
+  - [Triggers](#triggers-when) · [Conditions](#conditions-if) · [Actions](#actions-do--else)
+  - [The Rules editor](#the-rules-editor) · [The admin panel](#the-admin-panel-in-game) · [Who installs what](#who-installs-what)
 - [Worked examples](#worked-examples)
 - [Troubleshooting](#troubleshooting)
 - [Current limits](#current-limits)
@@ -236,8 +239,8 @@ waste time authoring a modlet. Don't — use the bundled tool instead:
    attached to a real prefab, every field on those types (and on `Player`/`Humanoid`/`Character`), and every
    enum's real member names. (It's cheap after the first run — it only rescans when the number of prefabs
    changes, e.g. you add/remove a mod.)
-2. Open `BepInEx/config/DrakesOmniConfig/ConfigBuilder/index.html` in a browser (it auto-deploys right next
-   to the manifest). It tries to load the manifest automatically; if your browser blocks that for local
+2. Open `BepInEx/config/DrakesOmniConfig/ConfigBuilder/index.html` in a browser (this build writes it there
+   at startup, right next to the manifest; `rules.html` beside it is the [Rules editor](#the-rules-editor)). It tries to load the manifest automatically; if your browser blocks that for local
    files, use the page's own file picker and point it at the JSON.
 3. Browse: pick a prefab → pick one of its real components → drill into its real fields (including nested
    structs) → pick a value control appropriate to that field's type (checkbox, number, dropdown for an enum,
@@ -247,6 +250,176 @@ waste time authoring a modlet. Don't — use the bundled tool instead:
 This is the same manifest you could read by hand if you wanted (it's just JSON), but the tool saves you the
 trip through nested JSON and gets the exact field *type* right, which the hand-written examples below also
 rely on for anything non-obvious.
+
+## Node rules: make things happen
+
+Overrides change *values*. **Rules** make things *happen*: when a player equips, eats, crafts, picks up,
+hits with or breaks an item, run a chain of actions — give items, heal, add a status effect, change
+durability, show a message or a popup with buttons. Still no code: a rule is a few lines of YAML, and the
+[Rules editor](#the-rules-editor) builds them for you visually.
+
+Each rule is a chain: **when** (one trigger) → **if** (conditions, all must pass) → **do** (actions).
+Optionally **else** runs when a condition fails.
+
+```yaml
+# Modlets/my-server/nodes/lucky-pickaxe.yaml
+rules:
+  - id: lucky-pickaxe
+    when: { event: hit, item: "Pickaxe*", target: "Rock*|MineRock*" }
+    if:
+      - chance: 10
+    do:
+      - give: { item: Coins, amount: 3 }
+      - message: { text: "Lucky strike! +3 coins", where: corner }
+```
+
+### Where rules live
+
+Any `.yaml` under a modlet's `nodes/` folder (any depth). The modlet still needs its `manifest.yaml`, and
+its `vars.yaml` placeholders work in rules too (`chance: "{luckyChance}"` — quote them). `id` must be unique
+within the modlet. A rule with a mistake is skipped with a clear message in the log naming the rule and the
+problem; the rest of the file still loads.
+
+### Rule options
+
+| Key | Meaning |
+|---|---|
+| `id` | Required. Unique name inside the modlet; the admin panel and logs use `modlet/id`. |
+| `when` | Required. The trigger: `when: spawn`, or `when: { event: equip, item: "Sword*" }`. |
+| `if` | Optional list of conditions. All must pass. |
+| `do` | Actions when the conditions pass. |
+| `else` | Optional actions when a condition fails. |
+| `cooldown` | Seconds before this rule may run again for this player (`cooldown: 60`). |
+| `enabled` | `false` keeps the rule in the file but off. |
+
+**Nodes** are one-key maps: `- give: { item: Coins, amount: 3 }`. Nodes with one main value also take a
+short form: `- chance: 10`, `- message: "Hello"`, `- heal: 25%`.
+
+**Patterns** (`item`, `target`, `is`, ...): case-insensitive, `*` is a wildcard, `|` separates
+alternatives — `"Sword*|Axe*"`. An empty pattern matches anything.
+
+**Text placeholders** in `message`/`popup` text: `{item}` (the item's display name), `{itemId}` (its prefab
+name), `{player}`, `{target}`. Game tokens like `$item_club` are translated too.
+
+### Triggers (`when`)
+
+| Event | Fires when | Filters |
+|---|---|---|
+| `equip` | the player equips an item | `item` |
+| `unequip` | the player unequips an item | `item` |
+| `pickup` | the player picks an item up from the ground | `item` |
+| `craft` | the player crafts or upgrades an item at a station | `item` |
+| `consume` | the player eats, drinks or uses up a consumable | `item` |
+| `hit` | the player hits a creature, rock, tree or log | `item` (weapon/tool), `target` (what was hit) |
+| `broke` | an equipped item's durability reaches zero | `item` |
+| `interval` | every `every` seconds (0.5 minimum) | `every` (required), `item` (only while an equipped item matches) |
+| `spawn` | the player joins the world or respawns | — |
+
+Re-equipping a saved loadout on login does **not** fire `equip`.
+
+### Conditions (`if`)
+
+Every condition also takes `not: true` to invert it.
+
+| Condition | Passes when | Args |
+|---|---|---|
+| `item` | the event's item matches | `pattern` |
+| `target` | what was hit matches (`hit` trigger) | `pattern` |
+| `chance` | a random roll succeeds | `percent` (0-100) |
+| `quality` | the event's item quality is in range | `min` (default 1), `max` |
+| `hasItem` | the player carries at least `amount` | `item`, `amount` (default 1) |
+| `equipped` | something equipped matches | `item` |
+| `health` | health is below/above a number or % of max | `below`, `above` |
+| `biome` | the player is in a biome | `is` (Meadows, BlackForest, Swamp, Mountain, Plains, Mistlands, AshLands, DeepNorth, Ocean) |
+| `time` | it's day or night | `is`: `day` / `night` |
+
+### Actions (`do` / `else`)
+
+| Action | Does | Args |
+|---|---|---|
+| `give` | adds an item (drops it at the player's feet if the inventory is full) | `item`, `amount`, `quality` |
+| `remove` | takes items from the inventory | `item` (empty = the event's own item), `amount` |
+| `durability` | changes the event's item durability | `change`: `+25`, `-10%`, `=100%` (% of max) |
+| `status` | adds a status effect | `effect` (Rested, Warm, Wet, ...), `duration` (seconds) |
+| `removeStatus` | removes a status effect | `effect` |
+| `heal` | heals the player | `amount` (number or % of max) |
+| `damage` | damages the player (armor doesn't reduce it) | `amount` (number or % of max) |
+| `stamina` | changes stamina | `change`: `+20`, `-15`, `=100%` |
+| `skill` | raises a skill | `skill` (Swords, Axes, Pickaxes, WoodCutting, Run, ...), `amount` |
+| `effect` | plays an effect prefab at the player | `prefab` (vfx_..., sfx_...) |
+| `spawn` | spawns a prefab in front of the player | `prefab`, `amount`, `distance` |
+| `message` | shows short on-screen text | `text`, `where`: `center` / `corner` |
+| `popup` | opens a window with buttons | `title`, `text`, `buttons` (below) |
+
+A **popup**'s buttons each run their own actions:
+
+```yaml
+- popup:
+    title: "Welcome, {player}!"
+    text: Take a starter kit?
+    buttons:
+      - label: Take the kit
+        do:
+          - give: { item: Club }
+          - give: { item: Torch }
+      - label: No thanks
+```
+
+Popups use DrakeModsLibs' window when DrakeModsLibs is installed (same look as the other Drakes mods), and
+a small built-in window otherwise. **DrakeModsLibs is optional** — OmniConfig never requires it.
+
+### Where rules run, and sync
+
+The server (or the host) loads the rule files and sends them to every client with the field overrides, over
+the same ServerSync channel. A player with **no local modlets** still gets the server's rules. Each rule runs
+on the client of the player it's about, which is where Valheim itself keeps that player's inventory,
+health and status effects.
+
+### The Rules editor
+
+`BepInEx/config/DrakesOmniConfig/ConfigBuilder/rules.html` (written there by this build at startup, next to
+the Fields page `index.html`). Open it in a browser — no server needed.
+
+1. The palette on the left lists every trigger, condition and action **this engine** supports, with help
+   text. It loads `NodeCatalog.json` (written by this build at world load) when the browser allows; otherwise
+   pick that file with the Catalog button. Without it the page still works from a built-in copy, minus the
+   item suggestions.
+2. **+ New rule**, then click a trigger. Click a lane (if / do / else, or a popup button's lane), then click
+   palette nodes to add them there — or drag nodes onto lanes.
+3. Click a node to edit it on the right: typed inputs, suggestions for items, status effects, skills and
+   biomes, required args marked. Move or remove nodes there; popups get a button list.
+4. **Check** lists problems (missing args, duplicate ids, rules with no trigger).
+5. **Export**: set the modlet id and file name, then **Copy YAML** (to paste in game) or **Download .yaml**
+   (to save into `Modlets/<modlet>/nodes/` yourself). **Import** loads an existing rules file back in for
+   editing. Your work is kept in the browser between visits.
+
+### The admin panel (in game)
+
+Press **F10** (config `[Admin] PanelKey`) in a game where you are the host, or on a server where you are on
+the admin list. It shows the server's modlets and every rule with **Turn off / Turn on** buttons, plus:
+
+- **Paste rules** — sends the YAML on your clipboard (from the Rules editor's Copy) to the server, which
+  checks it, saves it as `Modlets/<modlet>/nodes/<file>.yaml` (the `modlet:`/`file:` lines the editor
+  writes; `admin-rules/pasted` otherwise) and reloads. A file with mistakes is refused with the reason, and
+  nothing is saved.
+- **Reload** — re-reads every modlet from disk and re-sends to all players.
+
+On/off switches are kept in `BepInEx/config/DrakesOmniConfig/omniconfig-state.yaml`, never in the modlet
+files themselves. Rules change immediately for everyone; a modlet's **field overrides** change on the next
+world load.
+
+### Who installs what
+
+| Machine | Install |
+|---|---|
+| Dedicated server | `DrakesOmniConfigServer` + its modlets |
+| Admins who tweak the server from their own game | `DrakesOmniConfigServer` (for the F10 panel and the editor) |
+| Everyone else | `DrakesOmniConfig` |
+
+Both builds speak the same sync protocol, so admins on the Server build and players on the client build
+share one server. Neither build uses Jotunn, so there is no Jotunn mod-list check between them. A client
+and server must both be on the **same sync protocol** (builds with node rules use protocol 2; 0.1.0-beta.1/beta.2 used 1),
+or the server turns the client away with a version message.
 
 ## Worked examples
 
@@ -266,6 +439,10 @@ convenience, never ships) has several complete, working modlets:
   This is also the modlet the automated test suite (`Tests/suites/DrakesOmniConfig/`) checks against —
   every value it sets has a corresponding exact assertion, so it's a good "does my install actually work"
   sanity check too.
+- `com.drakemods.itemrules` — **node rules**, off by default (`enabled: false`): lucky pickaxe hits, a
+  welcome-kit popup with buttons, potion bonuses, a warm torch at night, a broken-tool message, an upgrade
+  bonus, hunting rewards. The automated suite `Tests/suites/DrakesOmniConfig-Nodes/` checks every trigger,
+  condition branch, popup, admin command and the editor's own export.
 
 ## Troubleshooting
 
@@ -278,6 +455,9 @@ convenience, never ships) has several complete, working modlets:
 - **A `Prefab`-scope override to the Player doesn't stick** — you probably want `Global` scope instead.
   `Prefab` scope bakes into the template once; a *second*, different cause of "didn't stick" for the Player
   specifically is the conflict case above, not a Scope mistake — check both.
+- **A rule never fires** — check the log at world load for "Rule '...' skipped: ..." (a mistake in the
+  file), and the F10 panel for whether it's on. `item`/`target` match prefab names (`Club`, `Deer`), not the
+  display names shown in game.
 - **Changed a field but an already-placed/already-crafted instance in your world doesn't reflect it** —
   expected for `Prefab` scope: it affects future spawns, not retroactively existing ones (existing world
   objects already baked in whatever value was live when they were created/saved).
@@ -292,5 +472,6 @@ Honest status, not aspirational — see [ROADMAP.md](../ROADMAP.md) for the full
 - **Server→client sync is implemented.** The server/host resolves its modlets once and publishes the result
   over ServerSync; a joined `DrakesOmniConfig` client with no local modlets adopts whatever the server sent.
 - **Console commands are a reserved placeholder**, not yet built.
-- The node-based scripting system (hooking arbitrary Harmony patch points visually, mentioned in the
-  client README as "later") hasn't been designed yet — it's a deliberately later phase.
+- **Node rules are rule chains**, not a free-form dataflow graph: one trigger, conditions, actions, else and
+  popup-button branches. Item and player events only so far; a way to hook arbitrary game methods is not built.
+- **Rules run for the local player only.** There is no "everyone in range" or server-side world action yet.

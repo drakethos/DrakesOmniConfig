@@ -1,0 +1,37 @@
+{
+  "name": "NR-11 durability: =50% sets the equipped axe to half",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "AxeStone",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "AxeStone"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.durability",
+      "args": {
+        "item": "AxeStone"
+      },
+      "expect": 50,
+      "label": "durability 50%"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

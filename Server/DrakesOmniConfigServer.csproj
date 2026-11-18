@@ -70,6 +70,29 @@
     <Reference Include="ServerSync">
       <HintPath>libs\ServerSync.dll</HintPath>
     </Reference>
+    <!-- UI for node popups and the admin panel. Ships with the game; never bundled. -->
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(CorlibPath)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(CorlibPath)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule">
+      <HintPath>$(CorlibPath)\UnityEngine.UIElementsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(CorlibPath)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- SOFT dependency, compile-only (net48 build so the v4.8 CI compile accepts it). Never copied or
+         shipped: at run time the player's own DrakeModsLibs is used if installed (Engine/Node/Ui/DialogService). -->
+    <Reference Include="DrakeModsLibs">
+      <HintPath>libs\DrakeModsLibs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -104,13 +127,13 @@
     <Compile Include="..\src\Engine\Fields\Accessors\Virtual\FallDamageAccessor.cs" />
     <Compile Include="..\src\Engine\Fields\Registry\FieldRegistry.cs" />
     <Compile Include="..\src\Engine\Fields\Application\FieldPatcher.cs" />
-    <Compile Include="..\src\Engine\Node\Node.cs" />
-    <Compile Include="..\src\Engine\Node\NodeLoader.cs" />
     <Compile Include="..\src\Engine\DynamicPatcher\HarmonyHookGen.cs" />
 
     <Compile Include="..\src\Sync\Transport\ModletChannel.cs" />
     <Compile Include="..\src\Sync\Transport\ResolvedOverrideSerializer.cs" />
     <Compile Include="..\src\Sync\Authority\ModletAuthority.cs" />
+    <Compile Include="..\src\Sync\Transport\NodeRuleSetSerializer.cs" />
+    <Compile Include="..\src\Engine\Node\**\*.cs" />
   </ItemGroup>
 
   <!-- Server-exclusive source — never compiled into the baseline DrakesOmniConfig assembly. -->
@@ -118,6 +141,9 @@
     <Compile Include="src\DrakesOmniConfigServer.cs" />
     <Compile Include="src\Tools\ConsoleCommands\OmniConfigConsoleCommands.cs" />
     <Compile Include="src\Tools\HtmlHelper\HtmlHelperServer.cs" />
+    <Compile Include="src\Tools\HtmlHelper\NodeCatalogWriter.cs" />
+    <Compile Include="src\Tools\HtmlHelper\ToolFiles.cs" />
+    <Compile Include="src\Tools\AdminPanel\AdminPanel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
@@ -153,6 +179,14 @@
     <Copy SourceFiles="$(TargetDir)icon.png" DestinationFiles="$(ThunderstoreFolder)\icon.png" Condition="Exists('$(TargetDir)icon.png')" />
     <Exec Command="powershell -Command Compress-Archive -Path '$(ThunderstoreFolder)\*' -DestinationPath '$(ZipOutput)' -Force" Condition="'$(CI_SKIP_POST_BUILD)' == ''" />
   </Target>
+
+  <!-- The Config Builder pages ship INSIDE the DLL and are written out at startup (Tools/HtmlHelper/ToolFiles.cs),
+       so the released zip carries them without any extra files. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Tools\ConfigBuilder\**\*.*">
+      <LogicalName>ConfigBuilder/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <!-- Dev convenience only — never ships: same as the baseline project's DeployExampleModlets, one
        folder up since Examples/ lives at the repo root, not under Server/. Also copies the

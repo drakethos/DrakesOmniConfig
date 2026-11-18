@@ -1,0 +1,38 @@
+{
+  "name": "NR-00 upload: rules.put parses, saves, reloads and syncs the test rules",
+  "description": "Goes through the same admin path an admin's paste uses: AdminChannel -> ModletOrchestrator.PutRules -> disk -> LoadPublish -> ServerSync publish -> RulesReceived -> RuleEngine.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.put",
+        "file": "DrakesOmniConfig-Nodes/rules/node-tests.yaml"
+      },
+      "expect": true,
+      "label": "server accepted the upload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.nodetest"
+      },
+      "expect": 13,
+      "label": "13 rules active"
+    },
+    {
+      "do": "check",
+      "check": "logcontains",
+      "source": "DrakesOmniConfig",
+      "text": "rule(s) from the server",
+      "label": "rules came back over the sync channel"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

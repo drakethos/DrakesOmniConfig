@@ -1,0 +1,41 @@
+{
+  "name": "NR-06 hit: hitting a deer runs the hit rule (target filter)",
+  "steps": [
+    {
+      "do": "spawn",
+      "prefab": "Deer",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hit",
+      "args": {
+        "target": "Deer"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "AmberPearl"
+      },
+      "expect": 1,
+      "label": "AmberPearl x1"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

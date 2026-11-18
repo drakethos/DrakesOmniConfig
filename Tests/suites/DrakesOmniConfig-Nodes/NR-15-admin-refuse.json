@@ -1,0 +1,30 @@
+{
+  "name": "NR-15 admin: a broken upload is refused and nothing is saved",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.put",
+        "payload": "modlet: com.drakemods.nodetest\nfile: broken\nrules:\n  - id: bad\n    when: equip\n    do:\n      - explode: {}\n"
+      },
+      "expect": false,
+      "label": "refused"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.nodetest"
+      },
+      "expect": 13,
+      "label": "rule count unchanged"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

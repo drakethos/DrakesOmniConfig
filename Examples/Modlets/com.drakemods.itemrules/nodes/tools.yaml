@@ -1,0 +1,23 @@
+# Tools with personality: a warm torch on cold nights, a sad message when something breaks.
+rules:
+  - id: warm-torch
+    when: { event: interval, every: 10, item: Torch }
+    if:
+      - time: night
+    do:
+      - status: { effect: Warm, duration: 12 }
+
+  - id: broken-tool
+    when: broke
+    do:
+      - message: "Your {item} broke!"
+      - give: { item: Resin, amount: 1 }
+
+  - id: fresh-edge
+    when: { event: craft, item: "Sword*|Axe*|Knife*" }
+    if:
+      - quality: { min: 2 }
+    do:
+      - durability: "=100%"
+      - skill: { skill: Swords, amount: 2 }
+      - message: { text: "{item} is upgraded and freshly honed.", where: corner }

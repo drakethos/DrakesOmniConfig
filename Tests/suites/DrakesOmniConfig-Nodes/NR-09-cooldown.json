@@ -1,0 +1,53 @@
+{
+  "name": "NR-09 cooldown: a 60 s cooldown lets the rule run once",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "SpearFlint",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "SpearFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.unequip",
+      "args": {
+        "item": "SpearFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "SpearFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Crystal"
+      },
+      "expect": 1,
+      "label": "Crystal x1"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

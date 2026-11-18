@@ -1,0 +1,9 @@
+# Mining sometimes pays: each pickaxe hit on a rock has a small chance to drop coins in your pocket.
+rules:
+  - id: lucky-pickaxe
+    when: { event: hit, item: "Pickaxe*", target: "Rock*|MineRock*|rock*" }
+    if:
+      - chance: "{luckyChance}"
+    do:
+      - give: { item: Coins, amount: "{luckyCoins}" }
+      - message: { text: "Lucky strike! +{luckyCoins} coins", where: corner }

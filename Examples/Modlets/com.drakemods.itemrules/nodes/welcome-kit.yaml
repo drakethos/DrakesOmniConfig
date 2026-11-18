@@ -1,0 +1,19 @@
+# A choice on arrival: new players (no club yet) are offered a starter kit. Each button runs its own actions.
+rules:
+  - id: welcome-kit
+    when: spawn
+    if:
+      - hasItem: { item: Club, not: true }
+    cooldown: 600
+    do:
+      - popup:
+          title: "Welcome, {player}!"
+          text: The server keeps a few supplies for newcomers. Take a starter kit?
+          buttons:
+            - label: Take the kit
+              do:
+                - give: { item: Club }
+                - give: { item: Torch }
+                - give: { item: Raspberry, amount: 10 }
+                - message: Good luck out there.
+            - label: No thanks

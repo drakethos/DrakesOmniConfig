@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+- **Node rules** (Phase 2): YAML rule chains in a modlet's `nodes/` folder — a trigger (equip, unequip,
+  pickup, craft, consume, hit, broke, interval, spawn), conditions (item, target, chance, quality, hasItem,
+  equipped, health, biome, time; any can be inverted) and actions (give, remove, durability, status,
+  removeStatus, heal, damage, stamina, skill, effect, spawn, message, popup with buttons), plus `else` and
+  per-rule cooldowns. Rules sync from the server like overrides.
+- Popups use DrakeModsLibs' window when it is installed (soft dependency) and a built-in window otherwise.
+- Admin requests (reload, toggle a modlet or rule, upload or delete a rules file) from a server admin's
+  client, checked against the server's admin list.
+- Sync protocol is now 2: a client and server must both have node-rule builds to connect.
+
 ## 0.1.0-beta.2
 - Fix: the release zip didn't include `YamlDotNet.dll` (not ILRepack-merged, unlike `ServerSync.dll`),
   so a clean install of 0.1.0-beta.1 threw a `TypeLoadException` on startup and loaded no modlets.
