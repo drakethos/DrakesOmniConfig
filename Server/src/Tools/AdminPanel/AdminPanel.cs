@@ -44,7 +44,7 @@ internal sealed class AdminPanel : MonoBehaviour
 
         if (!AdminChannel.CanAdmin)
         {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Only server admins can open the OmniConfig panel.");
+            GameCompat.Call(Player.m_localPlayer, "Message", MessageHud.MessageType.Center, "Only server admins can open the OmniConfig panel.");
             return;
         }
 

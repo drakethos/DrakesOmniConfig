@@ -97,7 +97,7 @@ internal static class Actions
         {
             int chunk = Mathf.Min(remaining, maxStack);
             remaining -= chunk;
-            if (inventory.AddItem(prefab.name, chunk, quality, 0, 0L, "", false) != null)
+            if (GameCompat.Call(inventory, "AddItem", prefab.name, chunk, quality, 0, 0L, "", false) != null)
             {
                 continue;
             }
@@ -159,7 +159,7 @@ internal static class Actions
 
     private static void Status(NodeContext c, NodeStep s)
     {
-        StatusEffect added = c.Player.GetSEMan().AddStatusEffect(FindEffect(NodeValues.Raw(s, "effect")), true);
+        var added = GameCompat.Call(c.Player.GetSEMan(), "AddStatusEffect", FindEffect(NodeValues.Raw(s, "effect")), true) as StatusEffect;
         if (added != null && NodeValues.Has(s, "duration"))
         {
             added.m_ttl = NodeValues.Number(s, "duration");

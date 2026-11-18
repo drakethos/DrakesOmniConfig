@@ -28,7 +28,7 @@ internal static class UiActions
                 var type = NodeValues.Raw(s, "where").Equals("corner", StringComparison.OrdinalIgnoreCase)
                     ? MessageHud.MessageType.TopLeft
                     : MessageHud.MessageType.Center;
-                c.Player.Message(type, NodeValues.Text(c, s, "text"));
+                GameCompat.Call(c.Player, "Message", type, NodeValues.Text(c, s, "text"));
             }
         });
 
