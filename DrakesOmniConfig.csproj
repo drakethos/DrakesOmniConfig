@@ -70,6 +70,11 @@
     <Reference Include="ServerSync">
       <HintPath>libs\ServerSync.dll</HintPath>
     </Reference>
+    <!-- Vector2i etc.: some Inventory.AddItem overloads use it, so overload resolution needs it. Ships with the game. -->
+    <Reference Include="assembly_utils">
+      <HintPath>$(PublicizedAssembliesPath)\assembly_utils_publicized.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <!-- UI for node popups and the admin panel. Ships with the game; never bundled. -->
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(CorlibPath)\UnityEngine.IMGUIModule.dll</HintPath>
