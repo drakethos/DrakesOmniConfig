@@ -430,3 +430,6 @@ FodyWeavers.xsd
 # DrakeMods: different per computer
 environment.props
 
+
+# local choice of which OmniConfig build deploys (dev.props.example)
+dev.props

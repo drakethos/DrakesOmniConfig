@@ -7,4 +7,24 @@
   <PropertyGroup Condition="'$(CI_SKIP_POST_BUILD)' != ''">
     <SkipPackageMod>true</SkipPackageMod>
   </PropertyGroup>
+  <!-- Which build deploys locally: dev.props (see dev.props.example). Default Server. The baseline deploys only in Client
+       mode, and then takes the Server build out of the same profile: the two must never load in the same game. -->
+  <Import Project="$(MSBuildThisFileDirectory)dev.props" Condition="Exists('$(MSBuildThisFileDirectory)dev.props')" />
+  <PropertyGroup>
+    <OmniConfigDevBuild Condition="'$(OmniConfigDevBuild)' == ''">Server</OmniConfigDevBuild>
+    <GaleModDeployPath Condition="'$(OmniConfigDevBuild)' != 'Client'"></GaleModDeployPath>
+    <R2ModDeployPath Condition="'$(OmniConfigDevBuild)' != 'Client'"></R2ModDeployPath>
+    <UpdateR2ModsYml Condition="'$(OmniConfigDevBuild)' != 'Client'">false</UpdateR2ModsYml>
+  </PropertyGroup>
+  <Target Name="OmniConfigDevBuildNotice" AfterTargets="Build" Condition="'$(OmniConfigDevBuild)' != 'Client' and '$(CI_SKIP_POST_BUILD)' == ''">
+    <Message Importance="high" Text="OmniConfigDevBuild=$(OmniConfigDevBuild): the baseline DrakesOmniConfig is not deployed (set Client in dev.props to test it)." />
+  </Target>
+  <Target Name="RemoveOmniConfigServerFromProfile" AfterTargets="CopyToGaleProfile;CopyToR2Profile" Condition="'$(OmniConfigDevBuild)' == 'Client' and '$(CI_SKIP_POST_BUILD)' == ''">
+    <ItemGroup>
+      <_OmniOther Include="$(GaleModPath)\$(ProfileName)\BepInEx\plugins\DrakeMods-DrakesOmniConfigServer" Condition="'$(GaleModPath)' != ''" />
+      <_OmniOther Include="$(R2ModPath)\$(ProfileName)\BepInEx\plugins\DrakeMods-DrakesOmniConfigServer" Condition="'$(R2ModPath)' != ''" />
+    </ItemGroup>
+    <RemoveDir Directories="@(_OmniOther)" />
+    <Message Importance="high" Text="Only one OmniConfig build may be deployed: removed DrakesOmniConfigServer from $(ProfileName) (if it was there)." />
+  </Target>
 </Project>

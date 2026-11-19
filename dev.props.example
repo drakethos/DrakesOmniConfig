@@ -1,0 +1,12 @@
+<Project>
+  <!-- Copy to dev.props (gitignored) to choose which OmniConfig build your local builds deploy.
+       Both builds register the same sync channel ("com.drakemods.omniconfig.sync ConfigSync"), so they must never load
+       in the same game: only the chosen one deploys, and deploying it removes the other from that profile.
+         Server (default) : Server\DrakesOmniConfigServer.csproj deploys to ProfileName (drakeTest); the baseline build does not.
+         Client           : DrakesOmniConfig.csproj (the baseline) deploys to drakeTest; the Server build does not
+                            (unless you name another profile with -p:ServerDeployProfile=<profile>).
+       One-off override without editing: dotnet msbuild <proj> -p:OmniConfigDevBuild=Client -->
+  <PropertyGroup>
+    <OmniConfigDevBuild>Server</OmniConfigDevBuild>
+  </PropertyGroup>
+</Project>
