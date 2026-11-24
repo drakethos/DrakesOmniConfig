@@ -1,0 +1,6 @@
+# Test modlet com.test.gated: requiresFlags [test_gate], so this binding exists only while test_gate is on.
+configs:
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Toggles
+    key: Enabled
+    value: true

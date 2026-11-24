@@ -1,0 +1,33 @@
+{
+  "name": "CF-07 self-synced: an entry the mod syncs itself is set on the server and left to the mod's sync",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Synced",
+        "key": "Server value"
+      },
+      "expect": "50",
+      "label": "set on the authoritative side"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgStatus",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Synced",
+        "key": "Server value"
+      },
+      "expect": "applied (the mod's own sync delivers it)",
+      "label": "delivery path"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

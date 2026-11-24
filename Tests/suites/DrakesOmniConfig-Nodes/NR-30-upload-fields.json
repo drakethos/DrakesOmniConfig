@@ -1,0 +1,30 @@
+{
+  "name": "NR-30 upload: the set-action test rules load",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.put",
+        "file": "DrakesOmniConfig-Nodes/rules/field-tests.yaml"
+      },
+      "expect": true,
+      "label": "server accepted the upload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.fieldtest"
+      },
+      "expect": 5,
+      "label": "5 rules active"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

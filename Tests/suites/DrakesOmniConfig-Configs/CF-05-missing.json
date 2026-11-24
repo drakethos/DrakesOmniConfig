@@ -1,0 +1,44 @@
+{
+  "name": "CF-05 missing target: an unknown mod or key is reported, nothing else is affected",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgStatus",
+      "args": {
+        "mod": "com.nobody.notinstalled",
+        "section": "Anything",
+        "key": "Whatever"
+      },
+      "expect": "mod 'com.nobody.notinstalled' is not installed",
+      "label": "unknown mod"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgStatus",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "No such key"
+      },
+      "expect": "'com.drakemods.omniconfig.testtarget' has no setting [Numbers] No such key",
+      "label": "unknown key"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "42",
+      "label": "the other bindings still applied"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

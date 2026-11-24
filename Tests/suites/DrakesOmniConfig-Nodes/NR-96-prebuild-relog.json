@@ -1,0 +1,17 @@
+{
+  "name": "NR-96 main-menu prebuild: clones built at the menu are used by the world, and a second world load still gets correct clones and looks",
+  "description": "Item clones and their looks are built at the main menu; entering a world only registers them (when their definition still matches). Then a relog goes back to the menu and loads the world again: the clones are built fresh and the looks built again on the new copies (Forge used to keep the destroyed copy).",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.prebuild", "args": {}, "expect": true, "label": "this world used clones built at the main menu" },
+    { "do": "hook", "name": "omniconfig.tint", "args": { "prefab": "PoisonSoup" }, "expect": "#5BBF3A", "label": "first world: the clone wears its look" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "PoisonSoup", "component": "ItemDrop", "field": "m_itemData.m_shared.m_food" }, "expect": 0, "label": "first world: a number edit applied once (at the menu)" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "PoisonSoup", "component": "ItemDrop", "field": "m_itemData.m_shared.m_name" }, "expect": "Poison Soup", "label": "first world: the name (applied at world entry)" },
+    { "do": "relog" },
+    { "do": "hook", "name": "omniconfig.tint", "args": { "prefab": "PoisonSoup" }, "expect": "#5BBF3A", "label": "after a relog: the new copy wears its look" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "PoisonSoup", "component": "ItemDrop", "field": "m_itemData.m_shared.m_food" }, "expect": 0, "label": "after a relog: still no food" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "PoisonSoup", "component": "ItemDrop", "field": "m_itemData.m_shared.m_name" }, "expect": "Poison Soup", "label": "after a relog: still named" },
+    { "do": "hook", "name": "omniconfig.recipe", "args": { "item": "PoisonSoup" }, "expect": "piece_cauldron 1 1: Mushroom x2, Ooze x2", "label": "after a relog: recipe registered" },
+    { "do": "hook", "name": "omniconfig.tintIs", "args": { "prefab": "SerpentStew", "color": "#5BBF3A" }, "expect": false, "label": "the original serpent stew is untouched" }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

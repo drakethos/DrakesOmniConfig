@@ -42,16 +42,104 @@ internal static class PrefabPassHook
         }
     }
 
-    private static void Apply(ZNetScene zNetScene)
+    /// <summary>Runs the prefab pass against the current world now (a joined client that received the server's set late).</summary>
+    public static void ApplyNow()
     {
+        if (ZNetScene.instance != null)
+        {
+            // Relative edits (*1.5, +20%) compound if a template is edited twice, so a second pass in the same world
+            // only rebuilds clones (fresh copies, so their edits start over) and looks.
+            Apply(ZNetScene.instance, clonesOnly: _appliedTo == ZNetScene.instance);
+        }
+    }
+
+    private static ZNetScene? _appliedTo;
+
+    /// <summary>The last world pass: how many clones it handled and how many of those were the main-menu copies. For tests.</summary>
+    internal static int LastClones { get; private set; }
+
+    internal static int LastReused { get; private set; }
+
+    private static void Apply(ZNetScene zNetScene) => Apply(zNetScene, clonesOnly: false);
+
+    private static void Apply(ZNetScene zNetScene, bool clonesOnly)
+    {
+        _appliedTo = zNetScene;
         if (_pendingOverrides == null || _pendingPatcher == null)
         {
             return;
         }
 
+        // a prebuild still running at the menu stops here; what it finished is reused below
+        MenuPrebuild.Stop();
+        PrefabCloner.BeginPass();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        int reused = 0;
+        // Clones first: every other override may target a prefab that only exists once its clone is made.
+        // (One summary line: a line per clone was a measurable part of a 400-clone load.)
+        int clones = 0;
+        double afterClones = 0;
+        PrefabCloner.Deferred++;
+        try
+        {
+            // a copy made at the main menu (MenuPrebuild) from the same definition is only registered, not made again
+            Dictionary<string, List<ResolvedOverride>> byItem = ByItem(_pendingOverrides);
+            foreach (ResolvedOverride resolved in _pendingOverrides)
+            {
+                if (resolved.Target.Scope == ModletScope.Prefab && resolved.FieldName == Config.Modlets.Loading.ModletLoader.CloneOfField)
+                {
+                    clones++;
+                    string id = resolved.Target.ItemId ?? "";
+                    string from = System.Convert.ToString(resolved.Expression.Operand, System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                    if (PrefabCloner.TryReuse(zNetScene, id, CloneKey(id, from, byItem)))
+                    {
+                        reused++;
+                    }
+                    else
+                    {
+                        PrefabCloner.Create(zNetScene, id, from);
+                    }
+                }
+            }
+
+            LastClones = clones;
+            LastReused = reused;
+            if (clones > 0)
+            {
+                ModLog.Info($"Clones: {clones} ({reused} prebuilt at the main menu) in {clock.Elapsed.TotalMilliseconds:0} ms (details at Debug log level).");
+            }
+
+            afterClones = clock.Elapsed.TotalMilliseconds;
+
+            foreach (ResolvedOverride resolved in _pendingOverrides)
+            {
+                if (resolved.Target.Scope == ModletScope.Prefab && resolved.FieldName == Config.Modlets.Loading.ModletLoader.RecipeField)
+                {
+                    PrefabCloner.SetRecipe(resolved.Target.ItemId ?? "", System.Convert.ToString(resolved.Expression.Operand, System.Globalization.CultureInfo.InvariantCulture) ?? "");
+                }
+            }
+        }
+        finally
+        {
+            PrefabCloner.Deferred--;
+        }
+
+        PrefabCloner.RegisterAll();
+
         foreach (ResolvedOverride resolved in _pendingOverrides)
         {
-            if (resolved.Target.Scope != ModletScope.Prefab)
+            if (resolved.Target.Scope != ModletScope.Prefab || resolved.FieldName.StartsWith("@", System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (clonesOnly && !PrefabCloner.IsClone(resolved.Target.ItemId))
+            {
+                continue;
+            }
+
+            // already applied to the menu copy of this clone (applying again would double a relative edit)
+            if (resolved.Target.Kind == SelectorKind.Item && PrefabCloner.WasAppliedAtPrebuild(resolved.Target.ItemId, OverrideKey(resolved)))
             {
                 continue;
             }
@@ -71,6 +159,59 @@ internal static class PrefabPassHook
                     break;
             }
         }
+
+        double afterFields = clock.Elapsed.TotalMilliseconds;
+        // looks may reskin a clone made above, so they come last; unchanged looks built at the menu stay as they are,
+        // unless a clone was made fresh here (its look must be built on the new copy)
+        Looks.LookBridge.ApplyNow(allowSkip: !PrefabCloner.AnyRecreated);
+        PrefabCloner.EndPass();
+        double end = clock.Elapsed.TotalMilliseconds;
+        ModLog.Info($"Prefab pass timing (ms): clones {afterClones:0}, recipes+fields {afterFields - afterClones:0}, looks {end - afterFields:0}; total {end:0}.");
+    }
+
+    // ---------------------------------------------------------------- fingerprints shared with MenuPrebuild
+
+    /// <summary>One override as text: what it sets and how. Equal text = the same edit.</summary>
+    internal static string OverrideKey(ResolvedOverride r) =>
+        string.Join("|", r.Target.TypeName, r.FieldName, r.Expression.Operator.ToString(),
+            System.Convert.ToString(r.Expression.Operand, System.Globalization.CultureInfo.InvariantCulture) ?? "", r.Expression.IsPercentage ? "%" : "");
+
+    /// <summary>A clone's definition: its source and every by-id override aimed at it, in order.</summary>
+    internal static string CloneKey(string id, string from, Dictionary<string, List<ResolvedOverride>> byItem)
+    {
+        var sb = new System.Text.StringBuilder(from);
+        if (byItem.TryGetValue(id, out List<ResolvedOverride>? list))
+        {
+            foreach (ResolvedOverride r in list)
+            {
+                sb.Append('\n').Append(OverrideKey(r));
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>Prefab-scope, by-id overrides grouped by target id (no "@" pseudo-fields).</summary>
+    internal static Dictionary<string, List<ResolvedOverride>> ByItem(IEnumerable<ResolvedOverride> overrides)
+    {
+        var byItem = new Dictionary<string, List<ResolvedOverride>>();
+        foreach (ResolvedOverride r in overrides)
+        {
+            if (r.Target.Scope != ModletScope.Prefab || r.Target.Kind != SelectorKind.Item || string.IsNullOrEmpty(r.Target.ItemId) ||
+                r.FieldName.StartsWith("@", System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!byItem.TryGetValue(r.Target.ItemId!, out List<ResolvedOverride>? list))
+            {
+                byItem[r.Target.ItemId!] = list = new List<ResolvedOverride>();
+            }
+
+            list.Add(r);
+        }
+
+        return byItem;
     }
 
     private static void ApplyToItem(ZNetScene zNetScene, ResolvedOverride resolved)

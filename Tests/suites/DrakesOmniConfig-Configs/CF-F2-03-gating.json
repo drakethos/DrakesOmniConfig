@@ -1,0 +1,55 @@
+{
+  "name": "CF-F2-03 gating: a requiresFlags modlet is on only while its flag is",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "test_gate",
+        "payload": "on"
+      },
+      "expect": true,
+      "label": "flag.set test_gate on"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Toggles",
+        "key": "Enabled"
+      },
+      "expect": "true",
+      "label": "gated modlet on: its binding applies"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "test_gate",
+        "payload": "off"
+      },
+      "expect": true,
+      "label": "flag.set test_gate off"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Toggles",
+        "key": "Enabled"
+      },
+      "expect": "false",
+      "label": "gated modlet off: the mod's own value back"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

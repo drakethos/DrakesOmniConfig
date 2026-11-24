@@ -1,0 +1,42 @@
+{
+  "name": "CF-00 setup: two test modlets with configs: bindings, then reload",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.putModlet",
+      "args": {
+        "modlet": "com.test.cfga",
+        "file": "configs.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/configs-a.yaml",
+        "priority": 0
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.putModlet",
+      "args": {
+        "modlet": "com.test.cfgb",
+        "file": "configs.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/configs-b.yaml",
+        "priority": 5
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "admin reload"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

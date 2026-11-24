@@ -1,0 +1,39 @@
+{
+  "name": "NR-34 set on prefab: equipping the bow changes the Feathers prefab",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "BowFineWood",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "BowFineWood"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.4
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.field",
+      "args": {
+        "prefab": "Feathers",
+        "component": "ItemDrop",
+        "field": "m_itemData.m_shared.m_weight"
+      },
+      "expect": 0.77,
+      "label": "Feathers weight 0.77"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

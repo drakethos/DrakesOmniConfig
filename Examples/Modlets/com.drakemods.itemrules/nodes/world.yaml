@@ -1,0 +1,27 @@
+# World events: kills, building, doors, biomes. Needs the same "enabled: true" as the rest of this modlet.
+rules:
+  - id: boar-bounty
+    when: { event: kill, target: "Boar" }
+    do:
+      - give: { item: Coins, amount: 5 }
+      - message: "Bounty: 5 coins for the {target}."
+
+  - id: builders-practice
+    when: { event: place, target: "wood_*" }
+    cooldown: 5
+    do:
+      - skill: { skill: Pickaxes, amount: 0.2 }
+
+  - id: campfire-warmth
+    when: { event: interact, target: "fire_pit|bonfire" }
+    cooldown: 30
+    do:
+      - aoeHeal: { amount: 10%, radius: 8 }
+      - message: The fire warms everyone nearby.
+
+  - id: biome-welcome
+    when: { event: biome, biome: "BlackForest|Swamp|Mountain" }
+    if:
+      - hasStatus: { effect: Rested, not: true }
+    do:
+      - message: "You enter the {target}. Stay sharp."

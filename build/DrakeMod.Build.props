@@ -13,6 +13,7 @@
     <R2ModProfileModScript Condition="'$(R2ModProfileModScript)' == '' and Exists('$(MSBuildThisFileDirectory)scripts\Update-R2ModProfileMod.ps1')">$(MSBuildThisFileDirectory)scripts\Update-R2ModProfileMod.ps1</R2ModProfileModScript>
     <R2ModProfileModScript Condition="'$(R2ModProfileModScript)' == '' and Exists('$(MSBuildThisFileDirectory)..\scripts\Update-R2ModProfileMod.ps1')">$(MSBuildThisFileDirectory)..\scripts\Update-R2ModProfileMod.ps1</R2ModProfileModScript>
     <DeployAfterTargets Condition="'$(DeployAfterTargets)' == ''">Build</DeployAfterTargets>
+    <ThunderstoreBasePath Condition="'$(ThunderstoreBasePath)' == '' and !$([MSBuild]::IsOSPlatform('Windows'))">$(HOME)/Modding/Thunderstore</ThunderstoreBasePath>
     <ThunderstoreBasePath Condition="'$(ThunderstoreBasePath)' == ''">C:\Modding\Thunderstore</ThunderstoreBasePath>
     <!-- ThunderstoreFolder/ZipOutput resolved in ResolveThunderstorePaths (after mod.package.props Version is known). -->
     <ModInfoGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\ModInfo.g.cs</ModInfoGeneratedFile>

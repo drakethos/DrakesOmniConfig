@@ -1,0 +1,33 @@
+{
+  "name": "CF-06 type safety: a bad value is rejected and the entry left alone; a range is clamped",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Second int"
+      },
+      "expect": "7",
+      "label": "'abc' for an int: unchanged"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Ranged float"
+      },
+      "expect": "10",
+      "label": "99 clamped to the allowed 0..10"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "NR-33 set on target: hitting a greyling changes its Character value",
+  "steps": [
+    {
+      "do": "spawn",
+      "prefab": "Greyling",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hit",
+      "args": {
+        "target": "Greyling"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.4
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.instanceField",
+      "args": {
+        "on": "target",
+        "target": "Greyling",
+        "type": "Character",
+        "field": "m_health"
+      },
+      "expect": "77",
+      "label": "m_health 77"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

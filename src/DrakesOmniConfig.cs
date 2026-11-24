@@ -27,6 +27,7 @@ namespace DrakesOmniConfig
     
     // Soft: popups use DrakeModsLibs' window when it is installed, a built-in dialog otherwise. Never required.
     [BepInDependency("com.drakemods.libs", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.jotunn.jotunn", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(GUID, ModName, Version)]
     public partial class DrakesOmniConfigPlugin : BaseUnityPlugin
     {
@@ -50,6 +51,10 @@ namespace DrakesOmniConfig
 
             _orchestrator.Bootstrap(mainConfig.ModletsFolder.Value);
             NodeLibrary.RegisterAll();
+            Engine.Flags.GlobalKeyMirror.Enabled = mainConfig.MirrorFlagsToGlobalKeys.Value;
+            _orchestrator.StartPreload(); // after the node library: rules are parsed against it
+            Engine.Hooks.MenuPrebuild.Runner = this; // builds clones and looks at the main menu (players; not on a headless server)
+            Engine.Looks.LookBridge.Start(this, Logger);
             gameObject.AddComponent<NodeTicker>();
             Logger.LogInfo($"{ModName} {Version} Awake.");
         }

@@ -2,7 +2,7 @@
   "name": "NR-17 catalog: NodeCatalog.json lists every registered node for the Rules editor",
   "description": "9 triggers + 9 conditions + 13 actions. The Server build writes the same file at world load; the Rules editor's palette is built from it.",
   "steps": [
-    { "do": "hook", "name": "omniconfig.catalog", "args": {}, "expect": 31, "label": "31 nodes written" }
+    { "do": "hook", "name": "omniconfig.catalog", "args": {}, "expect": 44, "label": "44 nodes written" }
   ],
   "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
 }

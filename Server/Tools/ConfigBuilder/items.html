@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DrakesOmniConfig — New Items</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #1e1e22; color: #ddd; }
+  header { padding: 12px 16px; background: #141417; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header input[type=file] { color: #ddd; }
+  #status { font-size: 13px; color: #9a9; }
+  header nav a { color: #9bc; text-decoration: none; margin-right: 10px; font-size: 13px; }
+  header nav a.here { color: #fff; border-bottom: 2px solid #4d7fae; }
+  main { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 1px; background: #333; min-height: calc(100vh - 53px); }
+  section { background: #1e1e22; overflow-y: auto; padding: 10px; max-height: calc(100vh - 53px); }
+  section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 0 0 8px; }
+  input[type=text], input[type=number], select { width: 100%; padding: 6px 8px; background: #141417; border: 1px solid #333; color: #ddd; border-radius: 4px; }
+  .list-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; }
+  .list-item:hover { background: #2a2a30; }
+  .list-item.active { background: #35506b; }
+  .list-item small { color: #888; }
+  .panel { border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 12px; background: #202024; }
+  .panel h3 { font-size: 12px; margin: 0 0 6px; color: #bbb; font-weight: 600; }
+  .panel label { display: block; font-size: 11px; color: #999; margin: 6px 0 2px; }
+  .row { display: flex; gap: 8px; align-items: end; }
+  .row > * { flex: 1; }
+  .row > .narrow { flex: 0 0 90px; }
+  button { padding: 7px 12px; border: none; border-radius: 4px; background: #35506b; color: #fff; cursor: pointer; font-size: 12px; }
+  button:hover { background: #40607f; }
+  button.secondary { background: #333; }
+  button.secondary:hover { background: #444; }
+  textarea { width: 100%; height: 220px; background: #141417; color: #ddd; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: Consolas, monospace; font-size: 12px; }
+  .muted { color: #888; font-size: 12px; line-height: 1.45; }
+  label.checkbox { display: flex !important; align-items: center; gap: 6px; font-size: 12px !important; color: #ccc !important; }
+  label.checkbox input { width: auto; }
+  input[type=color] { width: 44px; height: 28px; padding: 0; border: 1px solid #333; background: #141417; }
+  .swatch-row { display: flex; align-items: center; gap: 8px; }
+  code { color: #cf9; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DrakesOmniConfig — New Items</h1>
+  <nav><a href="index.html">Fields</a><a href="rules.html">Rules</a><a class="here" href="items.html">Items</a><a href="mods.html">Mod settings</a></nav>
+  <input type="file" id="manifestInput" accept="application/json">
+  <span id="status">No manifest loaded. Load GameDataManifest.json from BepInEx/config/DrakesOmniConfig/.</span>
+</header>
+
+<main>
+  <section>
+    <h2>Start from</h2>
+    <input type="text" id="filter" placeholder="Filter, e.g. Stew, Sword, wood_">
+    <label class="checkbox"><input type="checkbox" id="onlyItems" checked> items only (untick for pieces too)</label>
+    <div id="list"></div>
+  </section>
+
+  <section>
+    <h2>What to make</h2>
+    <div class="panel">
+      <div class="row">
+        <div><label>Base prefab</label><input type="text" id="base" placeholder="pick on the left"></div>
+        <div><label>Make</label>
+          <select id="mode">
+            <option value="clone">a new item (copy of the base)</option>
+            <option value="reskin">a new look for the base itself</option>
+          </select></div>
+      </div>
+      <div id="cloneFields">
+        <div class="row">
+          <div><label>New id (no spaces)</label><input type="text" id="newId" placeholder="PoisonSoup"></div>
+          <div><label>Display name</label><input type="text" id="name" placeholder="Poison Soup"></div>
+        </div>
+        <label>Description</label><input type="text" id="desc" placeholder="Smells like serpent stew.">
+      </div>
+      <label>Modlet (folder under Modlets/)</label><input type="text" id="modlet" value="com.myserver.items">
+    </div>
+
+    <div class="panel">
+      <h3>Look</h3>
+      <label class="checkbox"><input type="checkbox" id="useTint" checked> Colour</label>
+      <div class="swatch-row"><input type="color" id="tint" value="#5bbf3a"><span class="muted">replaces the model's base colour</span></div>
+      <div class="row">
+        <div><label>Gloss (0–1, empty = keep)</label><input type="number" id="gloss" min="0" max="1" step="0.05"></div>
+        <div><label>Metal (0–1, empty = keep)</label><input type="number" id="metal" min="0" max="1" step="0.05"></div>
+      </div>
+      <label class="checkbox"><input type="checkbox" id="useIcon"> Icon colour</label>
+      <div class="swatch-row"><input type="color" id="iconTint" value="#8be05a"><span class="muted">multiplied over the inventory icon</span></div>
+      <label class="checkbox"><input type="checkbox" id="useGlow"> Glow</label>
+      <div class="swatch-row"><input type="color" id="glow" value="#66ccff">
+        <input type="number" id="glowStrength" value="1" min="0" max="8" step="0.1" style="width:80px"><span class="muted">emission colour and strength</span></div>
+    </div>
+
+    <div class="panel" id="statsPanel">
+      <h3>Changes (optional)</h3>
+      <p class="muted">Same paths and math as overrides: <code>5</code>, <code>+5</code>, <code>-10%</code>, <code>*1.5</code>, <code>/2</code>.</p>
+      <div id="fieldRows"></div>
+      <button class="secondary" id="addField">+ field</button>
+    </div>
+
+    <div class="panel" id="recipePanel">
+      <h3>Recipe (optional, new items only)</h3>
+      <div class="row">
+        <div><label>Station</label>
+          <select id="station">
+            <option value="">none (no recipe)</option>
+            <option value="hand">by hand</option>
+            <option>piece_workbench</option><option>forge</option><option>piece_cauldron</option>
+            <option>blackforge</option><option>piece_magetable</option><option>piece_artisanstation</option>
+            <option>piece_stonecutter</option><option>piece_preptable</option>
+          </select></div>
+        <div class="narrow"><label>Level</label><input type="number" id="level" value="1" min="1"></div>
+        <div class="narrow"><label>Makes</label><input type="number" id="amount" value="1" min="1"></div>
+      </div>
+      <div id="reqRows"></div>
+      <button class="secondary" id="addReq">+ ingredient</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Result</h2>
+    <p class="muted" id="where"></p>
+    <div class="panel" id="yamlPanel">
+      <h3 id="yamlTitle">items.yaml</h3>
+      <textarea id="yamlOut" readonly></textarea>
+      <div class="row" style="margin-top:6px"><button id="copyYaml">Copy</button><button class="secondary" id="dlYaml">Download</button></div>
+    </div>
+    <div class="panel">
+      <h3 id="jsonTitle">looks/…json</h3>
+      <textarea id="jsonOut" readonly></textarea>
+      <div class="row" style="margin-top:6px"><button id="copyJson">Copy</button><button class="secondary" id="dlJson">Download</button></div>
+      <p class="muted">Admins can also send just the look live from a client: the server command <code>looks.put</code>
+        with <code id="putArg"></code> and this JSON (no restart; clients get it on sync). New item ids (the
+        <code>clones:</code> part) take effect when the server's world loads.</p>
+    </div>
+  </section>
+</main>
+
+<datalist id="itemNames"></datalist>
+
+<script>
+let manifest = null;
+const $ = id => document.getElementById(id);
+
+function applyManifestText(text, how) {
+  try {
+    manifest = JSON.parse(text);
+    $('status').textContent = `Loaded (${how}): ${manifest.prefabs.length} prefabs.`;
+    const items = manifest.prefabs.filter(p => p.components.includes('ItemDrop')).map(p => p.name).sort();
+    $('itemNames').innerHTML = items.map(n => `<option value="${n}">`).join('');
+    renderList();
+  } catch (err) { $('status').textContent = 'Could not read that file as JSON: ' + err.message; }
+}
+$('manifestInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => applyManifestText(r.result, 'manually loaded'); r.readAsText(f);
+});
+(function tryAutoLoad() {
+  if (typeof fetch !== 'function') return;
+  fetch('../GameDataManifest.json').then(r => r.ok ? r.text() : Promise.reject())
+    .then(t => applyManifestText(t, 'auto-loaded'))
+    .catch(() => { $('status').textContent = 'Auto-load blocked (normal for a local file:// page) — pick GameDataManifest.json above.'; });
+})();
+
+function kindOf(p) { return p.components.includes('ItemDrop') ? 'item' : p.components.includes('Piece') ? 'piece' : ''; }
+function renderList() {
+  const box = $('list'); box.innerHTML = '';
+  if (!manifest) return;
+  const f = $('filter').value.toLowerCase(), onlyItems = $('onlyItems').checked;
+  manifest.prefabs.filter(p => { const k = kindOf(p); return k && (!onlyItems || k === 'item') && p.name.toLowerCase().includes(f); })
+    .slice(0, 400).forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'list-item' + (p.name === $('base').value ? ' active' : '');
+      d.innerHTML = `<span>${p.name}</span><small>${kindOf(p)}</small>`;
+      d.onclick = () => { $('base').value = p.name; if (!$('newId').value) $('newId').value = 'My' + p.name; renderList(); update(); };
+      box.appendChild(d);
+    });
+}
+$('filter').addEventListener('input', renderList);
+$('onlyItems').addEventListener('change', renderList);
+
+function addRow(container, cls, html) {
+  const d = document.createElement('div'); d.className = 'row ' + cls; d.innerHTML = html;
+  d.querySelector('.del').onclick = () => { d.remove(); update(); };
+  d.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  container.appendChild(d);
+}
+$('addField').onclick = () => addRow($('fieldRows'), 'field',
+  `<div><label>Field (on ItemDrop)</label><input type="text" class="path" list="fieldHints" placeholder="m_itemData.m_shared.m_weight"></div>
+   <div class="narrow"><label>Value</label><input type="text" class="val" placeholder="*0.5"></div>
+   <div class="narrow"><label>&nbsp;</label><button class="secondary del">remove</button></div>`);
+$('addReq').onclick = () => addRow($('reqRows'), 'req',
+  `<div><label>Ingredient</label><input type="text" class="item" list="itemNames" placeholder="Mushroom"></div>
+   <div class="narrow"><label>Amount</label><input type="number" class="n" value="1" min="1"></div>
+   <div class="narrow"><label>&nbsp;</label><button class="secondary del">remove</button></div>`);
+document.body.insertAdjacentHTML('beforeend', `<datalist id="fieldHints">
+  <option value="m_itemData.m_shared.m_weight"><option value="m_itemData.m_shared.m_value">
+  <option value="m_itemData.m_shared.m_maxDurability"><option value="m_itemData.m_shared.m_maxStackSize">
+  <option value="m_itemData.m_shared.m_food"><option value="m_itemData.m_shared.m_foodStamina">
+  <option value="m_itemData.m_shared.m_damages.m_slash"><option value="m_itemData.m_shared.m_damages.m_fire">
+  <option value="m_itemData.m_shared.m_armor"><option value="m_itemData.m_shared.m_movementModifier"></datalist>`);
+
+const yq = s => /^[A-Za-z0-9_.\-]+$/.test(s) ? s : JSON.stringify(s);
+
+function update() {
+  const clone = $('mode').value === 'clone';
+  $('cloneFields').style.display = clone ? '' : 'none';
+  $('recipePanel').style.display = clone ? '' : 'none';
+  $('yamlPanel').style.display = clone || $('fieldRows').children.length ? '' : 'none';
+  const base = $('base').value.trim(), id = clone ? ($('newId').value.trim() || 'MyItem') : base;
+  const modlet = $('modlet').value.trim() || 'com.myserver.items';
+  const fields = [...document.querySelectorAll('#fieldRows .field')].map(r => [r.querySelector('.path').value.trim(), r.querySelector('.val').value.trim()]).filter(f => f[0] && f[1]);
+
+  // ---- items.yaml: a clone, or plain overrides on the base for a reskin with stat changes
+  let y = '';
+  if (clone) {
+    y += `clones:\n  - id: ${yq(id)}\n    from: ${yq(base || 'SerpentStew')}\n`;
+    if ($('name').value.trim()) y += `    name: ${yq($('name').value.trim())}\n`;
+    if ($('desc').value.trim()) y += `    description: ${yq($('desc').value.trim())}\n`;
+    if (fields.length) y += '    fields:\n' + fields.map(f => `      ${f[0]}: ${JSON.stringify(f[1])}\n`).join('');
+    const st = $('station').value, reqs = [...document.querySelectorAll('#reqRows .req')].map(r => [r.querySelector('.item').value.trim(), +r.querySelector('.n').value || 1]).filter(r => r[0]);
+    if (st && reqs.length) {
+      y += '    recipe:\n' + (st === 'hand' ? '' : `      station: ${st}\n`) + `      level: ${+$('level').value || 1}\n      amount: ${+$('amount').value || 1}\n      requires:\n`
+        + reqs.map(r => `        ${yq(r[0])}: ${r[1]}\n`).join('');
+    }
+  } else if (fields.length) {
+    y += `overrides:\n  - target: { typeName: ItemDrop, scope: Prefab, kind: Item, itemId: ${yq(base)} }\n    fields:\n` + fields.map(f => `      ${f[0]}: ${JSON.stringify(f[1])}\n`).join('');
+  }
+  $('yamlOut').value = y;
+
+  // ---- looks/<id>.json: a Forge reskin of the new id (or of the base)
+  const mat = {};
+  if ($('useTint').checked) mat.tint = $('tint').value.toUpperCase();
+  const floats = {};
+  if ($('gloss').value !== '') floats._Glossiness = +$('gloss').value;
+  if ($('metal').value !== '') floats._Metallic = +$('metal').value;
+  if (Object.keys(floats).length) mat.floats = floats;
+  if ($('useGlow').checked) {
+    const s = +$('glowStrength').value;
+    mat.colors = { _EmissionColor: $('glow').value.toUpperCase() + (s && s !== 1 ? '*' + s : '') };
+  }
+  const look = {};
+  if (Object.keys(mat).length) look.materials = [mat];
+  if ($('useIcon').checked) look.iconTint = $('iconTint').value.toUpperCase();
+  const recipe = { id, kind: 'reskin', base: id, look };
+  $('jsonOut').value = JSON.stringify(recipe, null, 2);
+
+  const file = id.toLowerCase().replace(/[^a-z0-9_.\-]/g, '-');
+  $('yamlTitle').textContent = `Modlets/${modlet}/items.yaml`;
+  $('jsonTitle').textContent = `Modlets/${modlet}/looks/${file}.json`;
+  $('putArg').textContent = `${modlet}/${file}`;
+  $('where').innerHTML = `Put these in <code>BepInEx/config/DrakesOmniConfig/Modlets/${modlet}/</code> on the server`
+    + ` (add a <code>manifest.yaml</code> with <code>enabled: true</code> if the folder is new). Looks need Jotunn installed.`;
+}
+document.querySelectorAll('input, select').forEach(e => { e.addEventListener('input', update); e.addEventListener('change', update); });
+
+function copy(id) { navigator.clipboard.writeText($(id).value).catch(() => { $(id).select(); document.execCommand('copy'); }); }
+function download(id, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([$(id).value], { type: 'text/plain' }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+$('copyYaml').onclick = () => copy('yamlOut');
+$('copyJson').onclick = () => copy('jsonOut');
+$('dlYaml').onclick = () => download('yamlOut', 'items.yaml');
+$('dlJson').onclick = () => download('jsonOut', $('jsonTitle').textContent.split('/').pop());
+update();
+</script>
+</body>
+</html>

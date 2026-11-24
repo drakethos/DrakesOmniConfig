@@ -1,0 +1,41 @@
+{
+  "name": "NR-21 kill: killing a deer runs the kill rule",
+  "steps": [
+    {
+      "do": "spawn",
+      "prefab": "Deer",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.kill",
+      "args": {
+        "target": "Deer"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 1.2
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Feathers"
+      },
+      "expect": 2,
+      "label": "Feathers x2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

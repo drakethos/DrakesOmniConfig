@@ -1,0 +1,32 @@
+{
+  "name": "NR-24 interact: using a door runs the interact rule",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.interact",
+      "args": {
+        "piece": "wood_door"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Stone"
+      },
+      "expect": 2,
+      "label": "Stone x2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -62,6 +62,58 @@ internal sealed class ConflictResolver
         return results;
     }
 
+    /// <summary>
+    /// One winner per other-mod config entry (GUID case-insensitive, section, key). All bindings are exact targets, so
+    /// the rule is: an <c>override: true</c> claim beats one without; then Priority (higher wins); then load order.
+    /// </summary>
+    public List<ResolvedConfigBinding> ResolveConfigs(IReadOnlyList<Modlet> modlets)
+    {
+        var winners = new Dictionary<string, (ConfigBinding Binding, string ModletId, int Priority)>();
+        var order = new List<string>();
+        foreach (Modlet modlet in modlets)
+        {
+            if (!modlet.Manifest.Enabled)
+            {
+                continue;
+            }
+
+            foreach (ConfigBinding binding in modlet.ConfigBindings)
+            {
+                string key = ResolvedConfigBinding.Identify(binding.Mod, binding.Section, binding.Key);
+                if (!winners.TryGetValue(key, out var incumbent))
+                {
+                    winners[key] = (binding, modlet.Manifest.Id, modlet.Manifest.Priority);
+                    order.Add(key);
+                    continue;
+                }
+
+                bool wins = binding.Override != incumbent.Binding.Override
+                    ? binding.Override
+                    : modlet.Manifest.Priority > incumbent.Priority;
+                if (wins)
+                {
+                    winners[key] = (binding, modlet.Manifest.Id, modlet.Manifest.Priority);
+                }
+            }
+        }
+
+        var results = new List<ResolvedConfigBinding>();
+        foreach (string key in order)
+        {
+            var w = winners[key];
+            results.Add(new ResolvedConfigBinding
+            {
+                Mod = w.Binding.Mod,
+                Section = w.Binding.Section,
+                Key = w.Binding.Key,
+                Expression = w.Binding.Expression,
+                WinningModletId = w.ModletId,
+            });
+        }
+
+        return results;
+    }
+
     // Identifies "the same thing being touched" across modlets so they can actually conflict.
     // TODO(you): Group/NamePattern/Category selectors that resolve to overlapping sets of real targets
     // (e.g. two different wildcard patterns that both happen to match "BronzeSword") aren't detected as

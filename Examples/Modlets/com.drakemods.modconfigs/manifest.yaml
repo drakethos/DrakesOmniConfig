@@ -1,0 +1,5 @@
+# Other mods' settings from a modlet (Phase F1). Off by default: turn on (enabled: true) to try it.
+schemaVersion: 1
+displayName: Mod configs example
+enabled: false
+priority: 0

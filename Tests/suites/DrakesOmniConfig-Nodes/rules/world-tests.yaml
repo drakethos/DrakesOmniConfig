@@ -1,0 +1,80 @@
+# Uploaded by NR-20 (admin rules.put), deleted by NR-98 (admin rules.delete). Deterministic: no chance rolls.
+modlet: com.drakemods.worldtest
+file: world-tests
+rules:
+  - id: kill-gives
+    when: { event: kill, target: Deer }
+    do:
+      - give: { item: Feathers, amount: 2 }
+
+  - id: place-gives
+    when: { event: place, target: wood_floor }
+    do:
+      - give: { item: Resin, amount: 2 }
+
+  - id: destroy-gives
+    when: { event: destroy, target: wood_pole }
+    do:
+      - give: { item: Coal, amount: 2 }
+
+  - id: interact-gives
+    when: { event: interact, target: wood_door }
+    do:
+      - give: { item: Stone, amount: 2 }
+
+  - id: biome-gives
+    when: { event: biome }
+    do:
+      - give: { item: BoneFragments, amount: 2 }
+
+  - id: biome-filtered
+    when: { event: biome, biome: DeepNorth }
+    do:
+      - give: { item: Honey, amount: 9 }
+
+  - id: skill-pass
+    when: { event: equip, item: KnifeCopper }
+    if:
+      - skillLevel: { skill: Swords, min: 0 }
+    do:
+      - give: { item: Raspberry, amount: 2 }
+    else:
+      - give: { item: Blueberries, amount: 2 }
+
+  - id: skill-fail
+    when: { event: equip, item: ShieldWood }
+    if:
+      - skillLevel: { skill: Blocking, min: 500 }
+    do:
+      - give: { item: Raspberry, amount: 5 }
+    else:
+      - give: { item: Blueberries, amount: 2 }
+
+  - id: status-pass
+    when: { event: equip, item: AxeBronze }
+    if:
+      - hasStatus: { effect: Rested }
+    do:
+      - give: { item: Honey, amount: 1 }
+    else:
+      - give: { item: Dandelion, amount: 1 }
+
+  - id: aoe-damage
+    when: { event: equip, item: Torch }
+    do:
+      - aoeDamage: { amount: 20%, radius: 15, who: enemies }
+
+  - id: aoe-heal
+    when: { event: equip, item: Hammer }
+    do:
+      - aoeHeal: { amount: 20%, radius: 10 }
+
+  - id: damage-target
+    when: { event: hit, target: Neck }
+    do:
+      - damageTarget: { amount: 100% }
+
+  - id: heal-target
+    when: { event: hit, target: Boar }
+    do:
+      - healTarget: { amount: 100% }

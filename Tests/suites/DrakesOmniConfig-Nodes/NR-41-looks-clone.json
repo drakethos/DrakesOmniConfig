@@ -1,0 +1,31 @@
+{
+  "name": "NR-41 looks: Poison Soup's looks/poison-soup.json recolours the clone",
+  "description": "A Forge reskin (built by the Forge code inside DrakesOmniConfig) applied to a modlet clone after the clone was made.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.tint",
+      "args": {
+        "prefab": "PoisonSoup"
+      },
+      "expect": "#5BBF3A",
+      "label": "the clone wears the look's tint"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.tintIs",
+      "args": {
+        "prefab": "SerpentStew",
+        "color": "#5BBF3A"
+      },
+      "expect": false,
+      "label": "the original serpent stew is untouched"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

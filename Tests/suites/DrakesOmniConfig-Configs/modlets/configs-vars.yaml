@@ -1,0 +1,10 @@
+# Test modlet com.test.cfgvars: values from the root vars.yaml (one depends on the flag event_weekend).
+configs:
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Text
+    key: Greeting
+    value: "{greetVar}"
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Numbers
+    key: Plain int
+    value: "{multVar}"

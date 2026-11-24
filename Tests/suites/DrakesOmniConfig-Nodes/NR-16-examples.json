@@ -8,8 +8,8 @@
       "args": {
         "modlet": "com.drakemods.itemrules"
       },
-      "expect": 8,
-      "label": "8 example rules"
+      "expect": 12,
+      "label": "12 example rules"
     }
   ],
   "asserts": [

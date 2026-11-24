@@ -1,0 +1,9 @@
+{
+  "name": "NR-00a start-up preload: the first world start used the modlets read in the background at plugin load",
+  "description": "Runs before NR-00 changes any modlet file. The modlets are read, resolved and serialised on a worker thread at plugin load; the first world start only publishes them when no modlet file changed in between. Admin edits later in the run take the normal path (NR-00 onwards).",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.loadPath", "args": {}, "expect": "preload", "label": "load path at world start" },
+    { "do": "hook", "name": "omniconfig.field", "args": { "prefab": "PoisonSoup", "component": "ItemDrop", "field": "m_itemData.m_shared.m_name" }, "expect": "Poison Soup", "label": "a modlet clone still exists" }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

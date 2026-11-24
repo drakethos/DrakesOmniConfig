@@ -1,0 +1,6 @@
+# Modlets/vars.yaml for the F2 tests: shared by every modlet; greetVar depends on a flag.
+greetVar:
+  default: plain
+  when:
+    event_weekend: weekend
+multVar: 3

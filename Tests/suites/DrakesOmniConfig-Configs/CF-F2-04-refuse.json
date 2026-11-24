@@ -1,0 +1,44 @@
+{
+  "name": "CF-F2-04 refused: an unknown flag or a bad value changes nothing",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "no_such_flag",
+        "payload": "on"
+      },
+      "expect": false,
+      "label": "unknown flag refused"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "event_weekend",
+        "payload": "sometimes"
+      },
+      "expect": false,
+      "label": "bad value refused"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "plain",
+      "label": "nothing changed"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

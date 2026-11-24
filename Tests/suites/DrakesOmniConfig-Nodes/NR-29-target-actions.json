@@ -1,0 +1,81 @@
+{
+  "name": "NR-29 damageTarget / healTarget: hit rules act on the creature that was hit",
+  "steps": [
+    {
+      "do": "spawn",
+      "prefab": "Neck",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hit",
+      "args": {
+        "target": "Neck"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.healthPct",
+      "args": {
+        "target": "Neck"
+      },
+      "expect": -1,
+      "label": "the neck was killed by damageTarget 100%"
+    },
+    {
+      "do": "spawn",
+      "prefab": "Boar",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hurt",
+      "args": {
+        "target": "Boar",
+        "percent": 50
+      },
+      "expect": true,
+      "label": "boar hurt to 50% first"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hit",
+      "args": {
+        "target": "Boar"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.healthPct",
+      "args": {
+        "target": "Boar"
+      },
+      "expect": 90,
+      "label": "healTarget topped the hurt boar up before the 1-damage hit landed"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

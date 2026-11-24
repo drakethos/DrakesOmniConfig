@@ -57,6 +57,33 @@ internal static class AdminPanelModel
             }
         }
 
+        // Phase F: server flags (switch live) and other mods' settings set by modlets (read-only)
+        if (set.Flags.Count > 0)
+        {
+            model.Rows.Add(new DialogRow { Label = "Flags", Detail = "Switching one updates config bindings, rules and flag-gated modlets now; field overrides on the next world load." });
+            foreach (NodeFlagInfo flag in set.Flags)
+            {
+                string name = flag.Name;
+                bool on = flag.On;
+                model.Rows.Add(new DialogRow
+                {
+                    Label = "    " + name,
+                    Detail = $"    {(on ? "on" : "off")}{(flag.Switched ? " · switched by an admin" : " · default")}",
+                    Muted = !on,
+                    Buttons = { Toggle(on, () => AdminChannel.Send("flag.set", name, on ? "off" : "on")) }
+                });
+            }
+        }
+
+        if (set.ConfigBindings.Count > 0)
+        {
+            model.Rows.Add(new DialogRow { Label = "Other mods' settings", Detail = $"{set.ConfigBindings.Count} binding(s) from modlets (configs:)" });
+            foreach (string line in set.ConfigBindings)
+            {
+                model.Rows.Add(new DialogRow { Label = "", Detail = "    " + line, Muted = !line.Contains(": applied") });
+            }
+        }
+
         model.Buttons.Add(new DialogButton { Label = "Paste rules", Closes = false, OnClick = () => AdminChannel.Send("rules.put", "", GUIUtility.systemCopyBuffer ?? "") });
         model.Buttons.Add(new DialogButton { Label = "Reload", Closes = false, OnClick = () => AdminChannel.Send("reload") });
         model.Buttons.Add(new DialogButton { Label = "Close", Primary = true });

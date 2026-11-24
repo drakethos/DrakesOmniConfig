@@ -1,0 +1,33 @@
+{
+  "name": "CF-03 conflict: the higher-priority modlet wins the same entry",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "from B",
+      "label": "priority 5 beats priority 0"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgWinner",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "com.test.cfgb",
+      "label": "winner named"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+flags:
+  event_weekend: false
+  test_gate: false

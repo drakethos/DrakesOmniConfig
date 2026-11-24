@@ -1,0 +1,11 @@
+{
+  // A Forge recipe (same format as Drakes Asset Forge's items/*.json), applied to the clone from items.yaml.
+  // "reskin" changes an existing prefab in place, so it works on a clone and in a running game.
+  "id": "PoisonSoup",
+  "kind": "reskin",
+  "base": "PoisonSoup",
+  "look": {
+    "materials": [ { "tint": "#5BBF3A" } ],
+    "iconTint": "#8BE05A"
+  }
+}

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using DrakesOmniConfig.Engine.Node.Library;
 using DrakesOmniConfig.Engine.Node.Schema;
 using UnityEngine;
 
@@ -44,6 +45,7 @@ internal sealed class NodeTicker : MonoBehaviour
             Durability.Clear();
             ReportedBroken.Clear();
             _intervalNext.Clear();
+            WorldWatch.Reset();
             // a moment after spawning, so the saved inventory and equipment are in place first
             _spawnAt = current != null ? Time.time + SpawnDelay : -1f;
         }
@@ -69,6 +71,8 @@ internal sealed class NodeTicker : MonoBehaviour
         {
             Broke(current);
         }
+
+        WorldWatch.Poll(current);
     }
 
     private void Intervals(Player player)

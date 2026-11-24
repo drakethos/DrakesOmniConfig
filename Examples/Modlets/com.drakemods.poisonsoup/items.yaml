@@ -1,0 +1,25 @@
+# "clones" makes a new prefab by copying an existing one. It shows up everywhere the original would:
+# the console (spawn PoisonSoup), inventories, the Rules editor's item list. "fields" use the same paths and
+# value math as "overrides" (Set: 5, Add: +5, Multiply: *2, Divide: /2, Add percent: +20%).
+clones:
+  - id: PoisonSoup
+    from: SerpentStew
+    name: Poison Soup
+    description: Smells like serpent stew. It is not serpent stew.
+    fields:
+      # a food gives health/stamina for a long time; this one gives nothing, the rule in nodes/ hurts instead
+      m_itemData.m_shared.m_food: "0"
+      m_itemData.m_shared.m_foodStamina: "0"
+      m_itemData.m_shared.m_foodEitr: "0"
+      m_itemData.m_shared.m_foodRegen: "0"
+      m_itemData.m_shared.m_value: "1"
+    # Craftable at a cauldron. "requires" is item: amount; "station" is the station's prefab name (leave it out to
+    # craft by hand), "level" the station level needed, "amount" how many one craft makes. It shows in the cauldron
+    # once the player has found the ingredients, like any vanilla recipe.
+    recipe:
+      station: piece_cauldron
+      level: 1
+      amount: 1
+      requires:
+        Mushroom: 2
+        Ooze: 2

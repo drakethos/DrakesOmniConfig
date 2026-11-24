@@ -1,0 +1,29 @@
+# Uploaded by NR-30 (admin rules.put), deleted by NR-39. The "set" action on an item, the player, a target and a prefab.
+modlet: com.drakemods.fieldtest
+file: field-tests
+rules:
+  - id: set-item
+    when: { event: equip, item: AxeStone }
+    do:
+      - set: { on: item, field: m_quality, value: "=3" }
+
+  - id: set-item-relative
+    when: { event: equip, item: SpearFlint }
+    do:
+      - set: { on: item, field: m_durability, value: "=100" }
+      - set: { on: item, field: m_durability, value: "/4" }
+
+  - id: set-player
+    when: { event: equip, item: KnifeChitin }
+    do:
+      - set: { on: player, field: m_swimSpeed, value: "=9" }
+
+  - id: set-target
+    when: { event: hit, target: Greyling }
+    do:
+      - set: { on: target, type: Character, field: m_health, value: "=77" }
+
+  - id: set-prefab
+    when: { event: equip, item: BowFineWood }
+    do:
+      - set: { on: prefab, prefab: Feathers, type: ItemDrop, field: m_itemData.m_shared.m_weight, value: "=0.77" }

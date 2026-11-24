@@ -1,0 +1,30 @@
+{
+  "name": "NR-98 cleanup: rules.delete removes the world-event test rules",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.delete",
+        "arg": "com.drakemods.worldtest/world-tests"
+      },
+      "expect": true,
+      "label": "deleted"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.worldtest"
+      },
+      "expect": 0,
+      "label": "no world test rules left"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

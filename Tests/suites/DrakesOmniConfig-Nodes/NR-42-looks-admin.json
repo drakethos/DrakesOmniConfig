@@ -1,0 +1,60 @@
+{
+  "name": "NR-42 looks admin: looks.put recolours a vanilla item live, looks.delete puts it back",
+  "description": "Same path an admin's paste takes: AdminChannel -> save looks/*.json -> reload -> publish -> embedded Forge reskin.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "looks.put",
+        "arg": "com.drakemods.looktest/club-red",
+        "file": "DrakesOmniConfig-Nodes/rules/look-club.json"
+      },
+      "expect": true,
+      "label": "server accepted the look"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.tint",
+      "args": {
+        "prefab": "Club"
+      },
+      "expect": "#C0392B",
+      "label": "club is red"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "looks.delete",
+        "arg": "com.drakemods.looktest/club-red"
+      },
+      "expect": true,
+      "label": "look deleted"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.tintIs",
+      "args": {
+        "prefab": "Club",
+        "color": "#C0392B"
+      },
+      "expect": false,
+      "label": "club is back to its own colour"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

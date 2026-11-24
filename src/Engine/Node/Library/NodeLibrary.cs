@@ -14,8 +14,11 @@ internal static class NodeLibrary
 
         _done = true;
         ItemTriggers.Register();
+        WorldTriggers.Register();
         Conditions.Register();
         Actions.Register();
+        AreaActions.Register();
+        FieldActions.Register();
         UiActions.Register();
     }
 }

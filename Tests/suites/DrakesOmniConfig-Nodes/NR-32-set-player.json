@@ -1,0 +1,38 @@
+{
+  "name": "NR-32 set on player: equipping the chitin knife changes a Player value",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "KnifeChitin",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "KnifeChitin"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.4
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.instanceField",
+      "args": {
+        "on": "player",
+        "field": "m_swimSpeed"
+      },
+      "expect": "9",
+      "label": "swim speed 9"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

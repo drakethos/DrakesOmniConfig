@@ -42,8 +42,21 @@ internal sealed class NodeModletInfo
 }
 
 /// <summary>Everything the server publishes about rules in one payload.</summary>
+internal sealed class NodeFlagInfo
+{
+    public string Name { get; set; } = "";
+    public bool On { get; set; }
+    public bool Switched { get; set; }
+}
+
 internal sealed class NodeRuleSet
 {
     public List<NodeModletInfo> Modlets { get; set; } = new();
+
+    /// <summary>Phase F: the server's flags (for the admin panel; synced with the rules).</summary>
+    public List<NodeFlagInfo> Flags { get; set; } = new();
+
+    /// <summary>Phase F: one line per config binding with what happened to it on the server (admin panel).</summary>
+    public List<string> ConfigBindings { get; set; } = new();
     public List<NodeRule> Rules { get; set; } = new();
 }

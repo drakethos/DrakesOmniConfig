@@ -25,10 +25,13 @@ installs the client build.
 - [vars.yaml — reusable numbers](#varsyaml--reusable-numbers)
 - [groups.yaml — named sets of ids](#groupsyaml--named-sets-of-ids)
 - [Conflicts: when two modlets touch the same field](#conflicts-when-two-modlets-touch-the-same-field)
+- [Other mods' settings: configs:](#other-mods-settings-configs)
+- [Server flags](#server-flags)
 - [Finding real field names: the Config Builder tool](#finding-real-field-names-the-config-builder-tool)
 - [Node rules: make things happen](#node-rules-make-things-happen)
   - [Triggers](#triggers-when) · [Conditions](#conditions-if) · [Actions](#actions-do--else)
   - [The Rules editor](#the-rules-editor) · [The admin panel](#the-admin-panel-in-game) · [Who installs what](#who-installs-what)
+- [Console commands (F5)](#console-commands-f5)
 - [Worked examples](#worked-examples)
 - [Troubleshooting](#troubleshooting)
 - [Current limits](#current-limits)
@@ -91,6 +94,8 @@ priority: 0
 | `displayName` | string | Shown in logs/tools. Doesn't need to match the folder name. |
 | `enabled` | bool | `false` disables the whole modlet without deleting it. |
 | `priority` | int | Higher wins a conflict against another modlet that *also* has `priority` set and neither uses `override: true`. See [Conflicts](#conflicts-when-two-modlets-touch-the-same-field). |
+| `requiresFlags` | list | The modlet is on only while **all** of these [flags](#server-flags) are on. |
+| `unlessFlags` | list | The modlet is off while **any** of these flags is on. |
 
 ## Overrides: target + fields
 
@@ -177,6 +182,21 @@ fields:
   m_itemData.m_shared.m_weight: "*{weightMultiplier}"
 ```
 
+**Shared by every modlet:** a `vars.yaml` directly in the `Modlets` folder (next to the modlet folders) works the
+same way for all of them. A modlet's own `vars.yaml` wins when both define the same name.
+
+**Depending on a [flag](#server-flags):** a variable can be a map instead of a plain value. The first `when:` entry
+whose flag matches wins (`!name` = the flag is off), else `default:`.
+
+```yaml
+# Modlets/vars.yaml
+stackMult:
+  default: 2
+  when:
+    event_weekend: 4
+carryBonus: 150
+```
+
 An unknown `{name}` (typo, or you forgot to define it) is left as literal text rather than guessed — you'll
 see the literal `{name}` in the error when it fails to parse as a number, which tells you immediately what's
 wrong.
@@ -191,7 +211,8 @@ BronzeWeapons:
   - MaceBronze
 ```
 
-Referenced via `kind: Group` + `groupName: BronzeWeapons`. **Parsing works; the engine doesn't yet match
+A `groups.yaml` directly in the `Modlets` folder is shared by every modlet (a modlet's own group of the same
+name wins). Referenced via `kind: Group` + `groupName: BronzeWeapons`. **Parsing works; the engine doesn't yet match
 targets against a group** (see [Current limits](#current-limits)) — for now, use `NamePattern` wildcards or
 list separate `Item` entries for the same effect.
 
@@ -228,6 +249,70 @@ to check** — another modlet (yours or someone else's) may be claiming the same
 specificity. This exact scenario is why the automated test suite bundled with this mod (see
 `Tests/suites/DrakesOmniConfig/`) checks the *actual live value*, not just "did it throw" — a silently-lost
 conflict looks identical to success in the log.
+
+## Other mods' settings: configs:
+
+Any modlet YAML file may set **another mod's BepInEx setting** with a `configs:` list (a list, because section and
+key names can contain `:`). The value uses the same [math grammar](#value-expressions-the-math-grammar) as fields;
+`true`/`false` and enum names work for those settings.
+
+```yaml
+configs:
+  - mod: Azumatt.AzuCraftyBoxes       # the mod's BepInEx plugin GUID (any letter case)
+    section: "1 - General"
+    key: "Stack multiplier"
+    value: "{stackMult}"              # "5", "=5", "*1.5", "+20%", "-5", text, true/false, an enum name
+    override: false                   # same escape hatch as overrides
+```
+
+- **The mod's `.cfg` file is never changed.** The value lives in memory while the binding is on; anything that saves
+  the file writes the mod's own value. Remove the binding (and reload) and the mod's own value comes back.
+- **Relative edits start from the mod's own value** every time, so `*2` stays x2 however often you reload.
+- **Conflicts** between modlets binding the same setting: `override: true` first, then the higher `priority`.
+- **Delivery to players.** The server sets every binding. A setting the mod syncs itself (ServerSync, or Jotunn
+  admin-only) then reaches players through that mod; for the rest, OmniConfig sends it and each player's game applies
+  it the same way (in memory, file untouched). Leaving the world puts every bound setting back.
+- **A mod or setting that isn't there** is logged once and tried again on every reload and world start (some mods
+  create settings late). A value of the wrong type is refused with a warning; a value outside a setting's allowed
+  range is clamped.
+- **Settings read only at start-up:** some mods read a setting once when the game starts. A new value reaches them
+  after a relog or restart; there is no reliable way to detect this.
+- `configs.list` (admin command, console `omni configs`, or the F10 panel) shows every binding, which modlet won it,
+  and what happened to it. The Config Builder's **Mod settings** page (`mods.html`) lists every installed mod's
+  settings (from `ModConfigManifest.json`, written when a world loads) and writes the `configs:` entries for you.
+
+Example: `Examples/Modlets/com.drakemods.modconfigs` (off by default).
+
+## Server flags
+
+Switches an admin can flip at runtime (`event_weekend`, `pvp`, ...), declared with defaults in
+`Modlets/flags.yaml`:
+
+```yaml
+flags:
+  event_weekend: false
+  pvp: true
+```
+
+Names: lower-case letters, digits and `_`, up to 32 characters. A flag can:
+
+- **change variables** ([conditional variables](#varsyaml--reusable-numbers)), and through them overrides, config
+  bindings and rules;
+- **switch whole modlets** (`requiresFlags` / `unlessFlags` in [manifest.yaml](#manifestyaml)).
+
+Switch one with the admin command `flag.set` (F10 panel **Flags** section, or console `omni flag event_weekend on`).
+Switches are kept in `BepInEx/config/DrakesOmniConfig/omni-flags.yaml` and survive restarts; `default` forgets a
+switch. A switch takes effect at once for config bindings, rules and flag-gated modlets; prefab **field overrides**
+change on the next world load.
+
+**Other mods can read flags without depending on OmniConfig:** on a server, every flag that is on is also the world
+global key `omni_flag_<name>` (removed when the flag goes off; config `[Flags] MirrorFlagsToGlobalKeys`):
+
+```csharp
+bool weekend = ZoneSystem.instance != null && ZoneSystem.instance.GetGlobalKey("omni_flag_event_weekend");
+```
+
+Flags are server-wide: there are no per-player or per-group flags yet.
 
 ## Finding real field names: the Config Builder tool
 
@@ -403,10 +488,23 @@ the admin list. It shows the server's modlets and every rule with **Turn off / T
   writes; `admin-rules/pasted` otherwise) and reloads. A file with mistakes is refused with the reason, and
   nothing is saved.
 - **Reload** — re-reads every modlet from disk and re-sends to all players.
+- **Flags** — every [server flag](#server-flags) with its state and a **Turn on / Turn off** button.
+- **Other mods' settings** — every `configs:` binding, the modlet that won it, and whether it applied.
 
 On/off switches are kept in `BepInEx/config/DrakesOmniConfig/omniconfig-state.yaml`, never in the modlet
 files themselves. Rules change immediately for everyone; a modlet's **field overrides** change on the next
 world load.
+
+### Console commands (F5)
+
+Server build. For the host, or an admin on a dedicated server (checked against the server's admin list):
+
+| Command | Does |
+|---|---|
+| `omni flag <name> on\|off\|default` | Switch a [flag](#server-flags) (`default` = back to `flags.yaml`) |
+| `omni flags` | List the flags and their state |
+| `omni configs` | List every `configs:` binding and what happened to it |
+| `omni reload` | Re-read every modlet and re-send to all players |
 
 ### Who installs what
 
@@ -471,7 +569,10 @@ Honest status, not aspirational — see [ROADMAP.md](../ROADMAP.md) for the full
   `Item` and `NamePattern` (Prefab scope only) are the only two that actually work end to end today.
 - **Server→client sync is implemented.** The server/host resolves its modlets once and publishes the result
   over ServerSync; a joined `DrakesOmniConfig` client with no local modlets adopts whatever the server sent.
-- **Console commands are a reserved placeholder**, not yet built.
+- **Console commands:** `omni flag/flags/configs/reload` only (Server build); creating or editing modlets from the
+  console is not built.
+- **`configs:` and mods that read a setting only at start-up:** the new value reaches them after a relog or restart.
+- **Flags are server-wide:** no per-player or per-group flags, and no scheduled flags yet.
 - **Node rules are rule chains**, not a free-form dataflow graph: one trigger, conditions, actions, else and
   popup-button branches. Item and player events only so far; a way to hook arbitrary game methods is not built.
 - **Rules run for the local player only.** There is no "everyone in range" or server-side world action yet.

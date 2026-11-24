@@ -1,0 +1,83 @@
+{
+  "name": "CF-F2-99 cleanup: remove the test modlets, flags and root vars; every value back",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.removeModlet",
+      "args": {
+        "modlet": "com.test.cfgvars"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.removeModlet",
+      "args": {
+        "modlet": "com.test.gated"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.removeRootFile",
+      "args": {
+        "file": "vars.yaml"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.removeRootFile",
+      "args": {
+        "file": "flags.yaml"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "hello",
+      "label": "back to hello"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "10",
+      "label": "back to 10"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.globalKey",
+      "args": {
+        "key": "omni_flag_event_weekend"
+      },
+      "expect": false,
+      "label": "no stale key"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

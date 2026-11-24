@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DrakesOmniConfig — Mod Settings</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #1e1e22; color: #ddd; }
+  header { padding: 12px 16px; background: #141417; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header input[type=file] { color: #ddd; }
+  #status { font-size: 13px; color: #9a9; }
+  header nav a { color: #9bc; text-decoration: none; margin-right: 10px; font-size: 13px; }
+  header nav a.here { color: #fff; border-bottom: 2px solid #4d7fae; }
+  main { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 1px; background: #333; min-height: calc(100vh - 53px); }
+  section { background: #1e1e22; overflow-y: auto; padding: 10px; max-height: calc(100vh - 53px); }
+  section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #888; margin: 0 0 8px; }
+  input[type=text], input[type=number], select { width: 100%; padding: 6px 8px; background: #141417; border: 1px solid #333; color: #ddd; border-radius: 4px; }
+  .list-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+  .list-item:hover { background: #2a2a30; }
+  .list-item.active { background: #35506b; }
+  .list-item small { color: #888; white-space: nowrap; }
+  .section-name { font-size: 11px; color: #888; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .panel { border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 12px; background: #202024; }
+  .panel h3 { font-size: 12px; margin: 0 0 6px; color: #bbb; font-weight: 600; }
+  .panel label { display: block; font-size: 11px; color: #999; margin: 6px 0 2px; }
+  .row { display: flex; gap: 8px; align-items: end; }
+  .row > * { flex: 1; }
+  button { padding: 7px 12px; border: none; border-radius: 4px; background: #35506b; color: #fff; cursor: pointer; font-size: 12px; }
+  button:hover { background: #40607f; }
+  button.secondary { background: #333; }
+  button.secondary:hover { background: #444; }
+  button.small { padding: 3px 8px; font-size: 11px; }
+  textarea { width: 100%; height: 260px; background: #141417; color: #ddd; border: 1px solid #333; border-radius: 4px; padding: 8px; font-family: Consolas, monospace; font-size: 12px; }
+  .muted { color: #888; font-size: 12px; line-height: 1.45; }
+  .badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #2f4a2f; color: #bdb; }
+  .badge.own { background: #4a3f2a; color: #edc; }
+  label.checkbox { display: flex !important; align-items: center; gap: 6px; font-size: 12px !important; color: #ccc !important; }
+  label.checkbox input { width: auto; }
+  code { color: #cf9; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DrakesOmniConfig — Mod Settings</h1>
+  <nav><a href="index.html">Fields</a><a href="rules.html">Rules</a><a href="items.html">Items</a><a class="here" href="mods.html">Mod settings</a></nav>
+  <input type="file" id="manifestInput" accept="application/json">
+  <span id="status">No manifest loaded. Load ModConfigManifest.json from BepInEx/config/DrakesOmniConfig/ (written when a world loads).</span>
+</header>
+<main>
+  <section>
+    <h2>Mods</h2>
+    <input type="text" id="search" placeholder="Search mods and settings...">
+    <div id="mods" style="margin-top:8px"></div>
+  </section>
+  <section>
+    <h2>Settings</h2>
+    <div id="settings" class="muted">Pick a mod.</div>
+    <div id="editor"></div>
+  </section>
+  <section>
+    <h2>configs: for your modlet</h2>
+    <div id="bindings" class="muted">No settings added yet.</div>
+    <div class="panel" style="margin-top:10px">
+      <h3>YAML</h3>
+      <textarea id="yaml" readonly></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="copy">Copy</button>
+        <button id="download" class="secondary">Download configs.yaml</button>
+      </div>
+      <p class="muted">Save it in a modlet folder (any name ending in <code>.yaml</code>, next to <code>manifest.yaml</code>), then
+        reload (F10 panel, or <code>omni reload</code>). The mod's <code>.cfg</code> file is never changed: the value lives in
+        memory and the mod's own value comes back when the binding is removed. Relative edits start from the mod's own
+        value. <span class="badge own">mod syncs it</span> settings reach players through that mod's own sync; the rest
+        through OmniConfig. A mod that reads a setting only at start-up needs a relog.</p>
+    </div>
+  </section>
+</main>
+<script>
+let manifest = null, currentMod = null, bindings = [];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+$('manifestInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      manifest = JSON.parse(reader.result);
+      const settings = manifest.mods.reduce((n, m) => n + m.settings.length, 0);
+      $('status').textContent = `${manifest.mods.length} mod(s), ${settings} setting(s) loaded.`;
+      renderMods();
+    } catch (err) { $('status').textContent = 'Not a ModConfigManifest.json: ' + err.message; }
+  };
+  reader.readAsText(file);
+});
+$('search').addEventListener('input', renderMods);
+
+function renderMods() {
+  if (!manifest) return;
+  const q = $('search').value.trim().toLowerCase();
+  const mods = manifest.mods.filter(m => m.settings.length > 0 && (!q || (m.name + ' ' + m.guid).toLowerCase().includes(q) ||
+    m.settings.some(s => (s.section + ' ' + s.key).toLowerCase().includes(q))));
+  $('mods').innerHTML = mods.map(m => `<div class="list-item${currentMod === m ? ' active' : ''}" data-guid="${esc(m.guid)}">
+    <span>${esc(m.name)}<br><small>${esc(m.guid)}</small></span><small>${m.settings.length}</small></div>`).join('') || '<p class="muted">No match.</p>';
+  $('mods').querySelectorAll('.list-item').forEach(el => el.onclick = () => {
+    currentMod = manifest.mods.find(m => m.guid === el.dataset.guid);
+    renderMods(); renderSettings();
+  });
+}
+
+function renderSettings() {
+  const q = $('search').value.trim().toLowerCase();
+  let html = '', section = null;
+  currentMod.settings.forEach((s, i) => {
+    if (q && !(s.section + ' ' + s.key).toLowerCase().includes(q) && !(currentMod.name + ' ' + currentMod.guid).toLowerCase().includes(q)) return;
+    if (s.section !== section) { section = s.section; html += `<div class="section-name">${esc(section)}</div>`; }
+    html += `<div class="list-item" data-i="${i}"><span>${esc(s.key)}</span><small>${esc(s.type)} · ${esc(s.default)}${s.selfSynced ? ' <span class="badge own">mod syncs it</span>' : ''}</small></div>`;
+  });
+  $('settings').innerHTML = html || '<p class="muted">No settings.</p>';
+  $('settings').classList.remove('muted');
+  $('settings').querySelectorAll('.list-item').forEach(el => el.onclick = () => renderEditor(currentMod.settings[+el.dataset.i]));
+  $('editor').innerHTML = '';
+}
+
+function renderEditor(s) {
+  const numeric = s.type === 'number' || s.type === 'integer';
+  const ops = numeric ? [['set', 'Set to'], ['add', 'Add'], ['sub', 'Subtract'], ['mul', 'Multiply by'], ['div', 'Divide by'], ['addp', 'Add percent'], ['subp', 'Subtract percent']] : [['set', 'Set to']];
+  const input = s.values
+    ? `<select id="val">${s.values.map(v => `<option${v === s.default ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>`
+    : `<input type="${numeric ? 'number' : 'text'}" id="val" value="${esc(s.default)}"${numeric ? ' step="any"' : ''}>`;
+  $('editor').innerHTML = `<div class="panel" style="margin-top:12px">
+    <h3>${esc(s.section)} · ${esc(s.key)}</h3>
+    <p class="muted">${esc(s.description || 'No description.')}<br>Type ${esc(s.type)}, default <code>${esc(s.default)}</code>${s.min !== undefined ? `, allowed ${esc(s.min)} to ${esc(s.max)} (outside values are clamped)` : ''}.
+    ${s.selfSynced ? '<br><span class="badge own">mod syncs it</span> The server sets it; the mod sends it to players.' : ''}</p>
+    <div class="row"><div><label>Change</label><select id="op">${ops.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>
+    <div><label>Value</label>${input}</div></div>
+    <label class="checkbox"><input type="checkbox" id="ovr"> override: win over other modlets setting it</label>
+    <div style="margin-top:8px"><button id="add">Add to configs:</button></div></div>`;
+  $('add').onclick = () => {
+    const v = String($('val').value).trim();
+    if (v === '') return;
+    const op = $('op').value;
+    const prefix = { add: '+', sub: '-', mul: '*', div: '/', addp: '+', subp: '-' }[op] || '';
+    let value = prefix + v + (op === 'addp' || op === 'subp' ? '%' : '');
+    if (op === 'set' && /^[+\-*\/=]/.test(v)) value = '=' + v;   // a plain "-5" would mean "subtract 5"
+    bindings = bindings.filter(b => !(b.mod === currentMod.guid && b.section === s.section && b.key === s.key));
+    bindings.push({ mod: currentMod.guid, name: currentMod.name, section: s.section, key: s.key, value, override: $('ovr').checked, own: s.selfSynced });
+    renderBindings();
+  };
+}
+
+function quote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
+
+function renderBindings() {
+  $('bindings').innerHTML = bindings.length === 0 ? 'No settings added yet.' : bindings.map((b, i) =>
+    `<div class="list-item"><span>${esc(b.name)} · ${esc(b.section)} · ${esc(b.key)} = <code>${esc(b.value)}</code>${b.own ? ' <span class="badge own">mod syncs it</span>' : ''}</span>
+     <button class="small secondary" data-i="${i}">Remove</button></div>`).join('');
+  $('bindings').querySelectorAll('button').forEach(el => el.onclick = () => { bindings.splice(+el.dataset.i, 1); renderBindings(); });
+  $('yaml').value = bindings.length === 0 ? '' : 'configs:\n' + bindings.map(b =>
+    `  - mod: ${quote(b.mod)}\n    section: ${quote(b.section)}\n    key: ${quote(b.key)}\n    value: ${quote(b.value)}\n` + (b.override ? '    override: true\n' : '')).join('');
+}
+
+$('copy').onclick = () => { $('yaml').select(); document.execCommand('copy'); };
+$('download').onclick = () => {
+  const blob = new Blob([$('yaml').value], { type: 'text/yaml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'configs.yaml'; a.click();
+};
+</script>
+</body>
+</html>

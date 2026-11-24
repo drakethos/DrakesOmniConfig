@@ -1,0 +1,8 @@
+# What eating it does: poisoned for a while, plus an immediate bite. Change the numbers or add more steps freely.
+rules:
+  - id: poison-soup-bites
+    when: { event: consume, item: PoisonSoup }
+    do:
+      - status: { effect: Poison, duration: 20 }
+      - damage: { amount: 15% }
+      - message: "That was not soup. Everything hurts."

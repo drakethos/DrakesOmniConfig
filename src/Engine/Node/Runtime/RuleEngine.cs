@@ -21,6 +21,9 @@ internal static class RuleEngine
     public static NodeRuleSet Current => _set;
     public static int ActiveCount { get; private set; }
 
+    /// <summary>Above zero while a rule's own action is hurting something: damage dealt by a rule must not fire rules (a hit rule that damages its target would recurse forever).</summary>
+    public static int Quiet { get; set; }
+
     /// <summary>Raised after a new set is adopted (the admin panel refreshes from it).</summary>
     public static event Action? Changed;
 
@@ -42,9 +45,9 @@ internal static class RuleEngine
     public static bool HasRules(string evt) => _byEvent.ContainsKey(evt);
 
     /// <summary>Fire <paramref name="evt"/> for the local player. <paramref name="filter"/> lets a trigger veto per rule (e.g. "every" timing).</summary>
-    public static void Fire(string evt, ItemDrop.ItemData? item, string itemId, GameObject? target = null, Func<NodeRule, bool>? filter = null)
+    public static void Fire(string evt, ItemDrop.ItemData? item, string itemId, GameObject? target = null, Func<NodeRule, bool>? filter = null, string? targetName = null)
     {
-        if (!_byEvent.TryGetValue(evt, out List<NodeRule>? rules))
+        if (Quiet > 0 || !_byEvent.TryGetValue(evt, out List<NodeRule>? rules))
         {
             return;
         }
@@ -55,10 +58,10 @@ internal static class RuleEngine
             return;
         }
 
-        string targetName = NodeValues.PrefabName(target);
+        string name = targetName ?? NodeValues.PrefabName(target);
         foreach (NodeRule rule in rules)
         {
-            if (!NodeValues.Matches(Trig(rule, "item"), itemId) || !NodeValues.Matches(Trig(rule, "target"), targetName))
+            if (!NodeValues.Matches(Trig(rule, "item"), itemId) || !NodeValues.Matches(Trig(rule, "target"), name))
             {
                 continue;
             }
@@ -80,7 +83,7 @@ internal static class RuleEngine
                 Item = item,
                 ItemId = itemId,
                 Target = target,
-                TargetName = targetName,
+                TargetName = name,
                 Rule = rule
             };
             Run(rule, ctx);

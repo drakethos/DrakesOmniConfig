@@ -1,0 +1,101 @@
+{
+  "name": "CF-F2-01 root vars and flags: shared variables reach a modlet's bindings; a flag-dependent one takes its default",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.putRootFile",
+      "args": {
+        "file": "flags.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/flags.yaml"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.putRootFile",
+      "args": {
+        "file": "vars.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/root-vars.yaml"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.putModlet",
+      "args": {
+        "modlet": "com.test.cfgvars",
+        "file": "configs.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/configs-vars.yaml"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.putModlet",
+      "args": {
+        "modlet": "com.test.gated",
+        "file": "configs.yaml",
+        "from": "DrakesOmniConfig-Configs/modlets/configs-gated.yaml",
+        "requires": "test_gate"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "plain",
+      "label": "{greetVar}: flag off, so the default"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "3",
+      "label": "{multVar} from Modlets/vars.yaml"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Toggles",
+        "key": "Enabled"
+      },
+      "expect": "false",
+      "label": "the gated modlet is off (test_gate off)"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.globalKey",
+      "args": {
+        "key": "omni_flag_event_weekend"
+      },
+      "expect": false,
+      "label": "no global key while the flag is off"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

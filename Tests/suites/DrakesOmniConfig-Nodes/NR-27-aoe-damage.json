@@ -1,0 +1,55 @@
+{
+  "name": "NR-27 aoeDamage: equipping a torch hurts enemies in range by 20%",
+  "steps": [
+    {
+      "do": "spawn",
+      "prefab": "Deer",
+      "dz": 4
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.healthPct",
+      "args": {
+        "target": "Deer"
+      },
+      "expect": 100,
+      "label": "deer starts at full health"
+    },
+    {
+      "do": "give",
+      "prefab": "Torch",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "Torch"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.healthPct",
+      "args": {
+        "target": "Deer"
+      },
+      "expect": 80,
+      "label": "deer at 80%"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

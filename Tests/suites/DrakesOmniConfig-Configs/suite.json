@@ -1,0 +1,7 @@
+{
+  "name": "DrakesOmniConfig-Configs",
+  "description": "Phase F1: modlet configs: bindings set another mod's BepInEx settings in memory, from their own value (baseline), never on disk. Target: the test-only plugin OmniConfigTestTarget (Tests/TestTarget), one setting of each kind plus one that looks ServerSync-synced. CF-00 writes two test modlets (priority 0 and 5) and reloads; CF-99 deletes them and checks every value went back.",
+  "requireMods": [ { "guid": "com.drakemods.omniconfig", "minVersion": "0.1.0" }, { "guid": "com.drakemods.omniconfig.testtarget" } ],
+  "setup": { "god": 1 },
+  "resetBetweenTests": false
+}

@@ -1,0 +1,45 @@
+{
+  "name": "NR-28 aoeHeal: equipping the hammer heals the player by 20% of max",
+  "description": "Test setup runs with god mode on; SetHealth is not blocked by it.",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Hammer",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.playerHealth",
+      "args": {
+        "set": 50
+      },
+      "expect": 50,
+      "label": "player at 50%"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "Hammer"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.playerHealth",
+      "args": {},
+      "expect": 70,
+      "label": "player at 70%"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

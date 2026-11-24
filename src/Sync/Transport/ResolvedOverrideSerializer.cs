@@ -40,7 +40,93 @@ internal static class ResolvedOverrideSerializer
         .IgnoreUnmatchedProperties()
         .Build();
 
+    /// <summary>
+    /// Writes the list as JSON by hand. JSON is YAML, so <see cref="Deserialize"/> (and older clients) read it unchanged;
+    /// YamlDotNet's reflection serializer took ~0.4 s for a 400-clone modlet set on every load.
+    /// Operands go out as strings, which is what a YAML round trip made of them anyway.
+    /// </summary>
     public static string Serialize(IReadOnlyList<ResolvedOverride> resolved)
+    {
+        var sb = new System.Text.StringBuilder(resolved.Count * 160);
+        sb.Append('[');
+        for (int i = 0; i < resolved.Count; i++)
+        {
+            ResolvedOverride r = resolved[i];
+            if (i > 0)
+            {
+                sb.Append(",\n");
+            }
+
+            sb.Append('{');
+            Field(sb, "typeName", r.Target.TypeName, first: true);
+            Field(sb, "scope", r.Target.Scope.ToString());
+            Field(sb, "kind", r.Target.Kind.ToString());
+            Field(sb, "itemId", r.Target.ItemId);
+            Field(sb, "groupName", r.Target.GroupName);
+            Field(sb, "namePattern", r.Target.NamePattern);
+            Field(sb, "category", r.Target.Category);
+            Field(sb, "fieldName", r.FieldName);
+            Field(sb, "operator", r.Expression.Operator.ToString());
+            Field(sb, "operand", Operand(r.Expression.Operand));
+            sb.Append(",\"isPercentage\":").Append(r.Expression.IsPercentage ? "true" : "false");
+            Field(sb, "winningModletId", r.WinningModletId);
+            sb.Append('}');
+        }
+
+        return sb.Append(']').ToString();
+    }
+
+    private static string? Operand(object? value) => value switch
+    {
+        null => null,
+        bool b => b ? "true" : "false",
+        double d => d.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+        float f => f.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+        IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+        _ => value.ToString(),
+    };
+
+    private static void Field(System.Text.StringBuilder sb, string key, string? value, bool first = false)
+    {
+        if (value == null)
+        {
+            return; // absent = null after reading, like the YAML serializer's empty value
+        }
+
+        if (!first)
+        {
+            sb.Append(',');
+        }
+
+        sb.Append('"').Append(key).Append("\":\"");
+        foreach (char c in value)
+        {
+            switch (c)
+            {
+                case '"': sb.Append("\\\""); break;
+                case '\\': sb.Append("\\\\"); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                default:
+                    if (c < ' ')
+                    {
+                        sb.Append("\\u").Append(((int)c).ToString("x4"));
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        sb.Append('"');
+    }
+
+    /// <summary>The previous YamlDotNet writer, kept for the round-trip test hook (both must read back the same).</summary>
+    internal static string SerializeYaml(IReadOnlyList<ResolvedOverride> resolved)
     {
         List<Dto> dtos = resolved.Select(r => new Dto
         {

@@ -1,0 +1,30 @@
+{
+  "name": "NR-39 cleanup: rules.delete removes the set-action test rules",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.delete",
+        "arg": "com.drakemods.fieldtest/field-tests"
+      },
+      "expect": true,
+      "label": "deleted"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.fieldtest"
+      },
+      "expect": 0,
+      "label": "no field test rules left"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

@@ -73,7 +73,7 @@ internal static class ToolFiles
 
         if (written > 0)
         {
-            ModLog.Info($"Config Builder: wrote {written} file(s) to '{root}'. Open index.html (fields) or rules.html (node rules) in a browser.");
+            ModLog.Info($"Config Builder: wrote {written} file(s) to '{root}'. Open index.html (fields), rules.html (node rules), items.html (new items and looks) or mods.html (other mods' settings) in a browser.");
         }
     }
 

@@ -1,0 +1,79 @@
+{
+  "name": "NR-40 Poison Soup: a modlet-made item that looks like Serpent Stew and poisons instead of healing",
+  "description": "Needs com.drakemods.poisonsoup (Examples/Modlets) enabled in the profile; its clone, field edits and consume rule are all plain YAML.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.field",
+      "args": {
+        "prefab": "PoisonSoup",
+        "component": "ItemDrop",
+        "field": "m_itemData.m_shared.m_name"
+      },
+      "expect": "Poison Soup",
+      "label": "the clone has its own name"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.field",
+      "args": {
+        "prefab": "PoisonSoup",
+        "component": "ItemDrop",
+        "field": "m_itemData.m_shared.m_food"
+      },
+      "expect": 0,
+      "label": "it gives no food"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.recipe",
+      "args": {
+        "item": "PoisonSoup"
+      },
+      "expect": "piece_cauldron 1 1: Mushroom x2, Ooze x2",
+      "label": "cauldron recipe registered"
+    },
+    {
+      "do": "give",
+      "prefab": "PoisonSoup",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "PoisonSoup"
+      },
+      "expect": 1,
+      "label": "the game can give it (ObjectDB knows it)"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.consume",
+      "args": {
+        "item": "PoisonSoup"
+      },
+      "expect": true,
+      "label": "it can be eaten"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.6
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hasStatus",
+      "args": {
+        "effect": "Poison"
+      },
+      "expect": true,
+      "label": "eating it poisons the player"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

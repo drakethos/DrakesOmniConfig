@@ -1,0 +1,30 @@
+{
+  "name": "NR-20 upload: the world-event test rules load",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "rules.put",
+        "file": "DrakesOmniConfig-Nodes/rules/world-tests.yaml"
+      },
+      "expect": true,
+      "label": "server accepted the upload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.rules",
+      "args": {
+        "modlet": "com.drakemods.worldtest"
+      },
+      "expect": 13,
+      "label": "13 rules active"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

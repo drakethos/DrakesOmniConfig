@@ -24,14 +24,25 @@ internal sealed class ModletManager
     }
 
     public IReadOnlyList<ResolvedOverride> ResolvedOverrides => _resolved;
+
+    /// <summary>Winning <c>configs:</c> bindings (server side), or the server's as received (joined client).</summary>
+    public IReadOnlyList<ResolvedConfigBinding> ResolvedConfigBindings { get; private set; } = new List<ResolvedConfigBinding>();
     public NodeRuleSet Rules { get; private set; } = new();
+
+    /// <summary>Flags as of the last load (authoritative side): declared defaults plus admin switches.</summary>
+    public DrakesOmniConfig.Config.Flags.FlagSet Flags => _loader.Flags;
     public NodeLoader NodeLoader => _nodeLoader;
+
+    /// <summary>Modlet id -> its looks/*.json (file -> recipe JSON), for every modlet that is on.</summary>
+    public Dictionary<string, Dictionary<string, string>> Looks { get; private set; } = new();
 
     /// <summary>Authoritative side only (dedicated server, or singleplayer/hosting client). Reads local files and resolves conflicts.</summary>
     public void LoadAndResolve(string folderPath, NodeState state)
     {
         _loaded = _loader.LoadAll(folderPath);
-        _resolved = _resolver.Resolve(_loaded.Where(m => !state.DisabledModlets.Contains(m.Manifest.Id)).ToList());
+        List<Modlet> active = _loaded.Where(m => !state.DisabledModlets.Contains(m.Manifest.Id)).ToList();
+        _resolved = _resolver.Resolve(active);
+        ResolvedConfigBindings = _resolver.ResolveConfigs(active);
 
         var set = new NodeRuleSet();
         foreach (Modlet modlet in _loaded)
@@ -57,12 +68,25 @@ internal sealed class ModletManager
         }
 
         Rules = set;
+        Looks = _loaded
+            .Where(m => m.Manifest.Enabled && !state.DisabledModlets.Contains(m.Manifest.Id) && m.Looks.Count > 0)
+            .ToDictionary(m => m.Manifest.Id, m => m.Looks);
+    }
+
+    public void AdoptLooks(Dictionary<string, Dictionary<string, string>> looks)
+    {
+        Looks = looks;
     }
 
     /// <summary>Joined-client side only. Adopts whatever ModletAuthority received from the server — never calls LoadAndResolve.</summary>
     public void AdoptResolved(IReadOnlyList<ResolvedOverride> resolved)
     {
         _resolved = resolved.ToList();
+    }
+
+    public void AdoptConfigBindings(IReadOnlyList<ResolvedConfigBinding> bindings)
+    {
+        ResolvedConfigBindings = bindings.ToList();
     }
 
     public void AdoptRules(NodeRuleSet rules)

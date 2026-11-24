@@ -1,0 +1,52 @@
+{
+  "name": "NR-23 destroy: removing a wood pole with the hammer runs the destroy rule",
+  "description": "Places a pole 3 m ahead of the camera and removes it through Player.RemovePiece in the same frame.",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Hammer",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "Hammer"
+      },
+      "expect": true,
+      "label": "hammer equipped (the game's remove needs it)"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.placeRemove",
+      "args": {
+        "piece": "wood_pole"
+      },
+      "expect": true,
+      "label": "the game removed the pole"
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Coal"
+      },
+      "expect": 2,
+      "label": "Coal x2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

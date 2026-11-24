@@ -40,6 +40,15 @@ internal static class Conditions
             (c, s) => NodeValues.Matches(NodeValues.Raw(s, "is"), c.Player.GetCurrentBiome().ToString()),
             NodeRegistry.Arg("is", "biome", "Biome name or pattern: Meadows, BlackForest, Swamp, Mountain, Plains, Mistlands, AshLands, DeepNorth, Ocean.", required: true));
 
+        Add("hasStatus", "The player has this status effect active.", "effect",
+            (c, s) => c.Player.GetSEMan().GetStatusEffects().Any(e => e != null && NodeValues.Matches(NodeValues.Raw(s, "effect"), e.name)),
+            NodeRegistry.Arg("effect", "statusEffect", "Status effect name or pattern (Wet, Rested, Potion_*).", required: true));
+
+        Add("skillLevel", "One of the player's skills is within a range.", "skill", SkillLevel,
+            NodeRegistry.Arg("skill", "skill", "Skill name (Swords, Run, ...).", required: true),
+            NodeRegistry.Arg("min", "number", "Lowest level that passes.", def: "0"),
+            NodeRegistry.Arg("max", "number", "Highest level that passes (empty = no limit)."));
+
         Add("time", "It is day or night.", "is", (c, s) =>
             {
                 string want = NodeValues.Raw(s, "is").Trim();
@@ -69,6 +78,18 @@ internal static class Conditions
 
         int q = c.Item.m_quality;
         return q >= NodeValues.Int(s, "min", 1) && (!NodeValues.Has(s, "max") || q <= NodeValues.Int(s, "max"));
+    }
+
+    private static bool SkillLevel(NodeContext c, NodeStep s)
+    {
+        string name = NodeValues.Raw(s, "skill");
+        if (!Enum.TryParse(name, true, out Skills.SkillType skill) || skill == Skills.SkillType.None)
+        {
+            throw new InvalidOperationException($"no skill named '{name}'.");
+        }
+
+        float level = c.Player.GetSkills().GetSkillLevel(skill);
+        return level >= NodeValues.Number(s, "min", 0f) && (!NodeValues.Has(s, "max") || level <= NodeValues.Number(s, "max"));
     }
 
     private static bool HasItem(NodeContext c, NodeStep s)

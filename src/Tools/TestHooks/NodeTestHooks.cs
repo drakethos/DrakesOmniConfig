@@ -46,6 +46,56 @@ internal static class NodeTestHooks
         return NodeRegistry.All(NodeKind.Trigger).Count() + NodeRegistry.All(NodeKind.Condition).Count() + NodeRegistry.All(NodeKind.Action).Count();
     }
 
+    /// <summary>
+    /// Serialises the live resolved set with the sync writer (hand-made JSON) and with the old YamlDotNet writer, reads
+    /// both back and returns how many overrides differ (expect 0), so the faster writer cannot change what clients get.
+    /// </summary>
+    [TestHook("omniconfig.syncRoundTrip")]
+    internal static object? SyncRoundTrip(Dictionary<string, object?> args)
+    {
+        var live = DrakesOmniConfig.Engine.Orchestration.ModletOrchestrator.CurrentResolved;
+        if (live.Count == 0)
+        {
+            throw new InvalidOperationException("no resolved overrides loaded");
+        }
+
+        var json = DrakesOmniConfig.Sync.Transport.ResolvedOverrideSerializer.Deserialize(DrakesOmniConfig.Sync.Transport.ResolvedOverrideSerializer.Serialize(live));
+        var yaml = DrakesOmniConfig.Sync.Transport.ResolvedOverrideSerializer.Deserialize(DrakesOmniConfig.Sync.Transport.ResolvedOverrideSerializer.SerializeYaml(live));
+        if (json.Count != yaml.Count)
+        {
+            return Math.Abs(json.Count - yaml.Count) + 1000000;
+        }
+
+        int diff = 0;
+        for (int i = 0; i < json.Count; i++)
+        {
+            string a = Key(json[i]), b = Key(yaml[i]);
+            if (a != b)
+            {
+                diff++;
+                if (diff <= 5) Debug.LogWarning("[omniconfig.syncRoundTrip] json " + a + " | yaml " + b);
+            }
+        }
+
+        return diff;
+
+        static string Key(DrakesOmniConfig.Config.Modlets.Schema.ResolvedOverride r) => string.Join("|", r.Target.TypeName, r.Target.Scope, r.Target.Kind,
+            r.Target.ItemId, r.Target.GroupName, r.Target.NamePattern, r.Target.Category, r.FieldName, r.Expression.Operator,
+            Convert.ToString(r.Expression.Operand, CultureInfo.InvariantCulture), r.Expression.IsPercentage, r.WinningModletId);
+    }
+
+    /// <summary>"preload" when the world start used the background start-up load, "load" when it read the modlets itself.</summary>
+    [TestHook("omniconfig.loadPath")]
+    internal static object? LoadPath(Dictionary<string, object?> args) => DrakesOmniConfig.Engine.Orchestration.ModletOrchestrator.WorldStartLoadPath;
+
+    /// <summary>Whether this world's clones came from the main-menu prebuild: "reused N of M" (and the prebuild's own summary).</summary>
+    [TestHook("omniconfig.prebuild")]
+    internal static object? Prebuild(Dictionary<string, object?> args)
+    {
+        Debug.Log($"[omniconfig.prebuild] reused {DrakesOmniConfig.Engine.Hooks.PrefabPassHook.LastReused} of {DrakesOmniConfig.Engine.Hooks.PrefabPassHook.LastClones}; menu: {DrakesOmniConfig.Engine.Hooks.MenuPrebuild.LastSummary}");
+        return DrakesOmniConfig.Engine.Hooks.PrefabPassHook.LastReused > 0;
+    }
+
     [TestHook("omniconfig.lastReply")]
     internal static object? LastReply(Dictionary<string, object?> args) => AdminChannel.LastReply;
 
@@ -142,6 +192,67 @@ internal static class NodeTestHooks
         return true;
     }
 
+    /// <summary>{ on: item|player|target, item?|target?, type?, field } — reads a field off a live object the way the "set" action writes it (item: a carried item; target: a component of the nearest creature).</summary>
+    [TestHook("omniconfig.instanceField")]
+    internal static object? InstanceField(Dictionary<string, object?> args)
+    {
+        string on = Require(args, "on").ToLowerInvariant();
+        string field = Require(args, "field");
+        object instance;
+        string typeName;
+        switch (on)
+        {
+            case "item":
+                instance = Item(args);
+                typeName = "ItemDrop+ItemData";
+                break;
+            case "player":
+                instance = LocalPlayer();
+                typeName = "Player";
+                break;
+            default:
+                typeName = Arg(args, "type").Length > 0 ? Arg(args, "type") : "Character";
+                instance = Nearest(Require(args, "target")).GetComponent(typeName) ?? throw new InvalidOperationException($"no component '{typeName}'.");
+                break;
+        }
+
+        Type type = HarmonyLib.AccessTools.TypeByName(typeName) ?? throw new InvalidOperationException($"no type {typeName}.");
+        return Convert.ToString(new DrakesOmniConfig.Engine.Fields.Accessors.Reflected.ReflectedFieldAccessor(type, field).Get(instance), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>{ prefab } — the first model renderer's material colour (_Color) on that prefab template, as #RRGGBB.</summary>
+    [TestHook("omniconfig.tint")]
+    internal static object? Tint(Dictionary<string, object?> args)
+    {
+        GameObject prefab = ZNetScene.instance.GetPrefab(Require(args, "prefab")) ?? throw new InvalidOperationException("No such prefab.");
+        // the model's own renderers, as Forge counts them: a weapon's swing trail or a particle is not the look
+        Renderer renderer = prefab.GetComponentsInChildren<Renderer>(true)
+                                .FirstOrDefault(r => (r is MeshRenderer || r is SkinnedMeshRenderer) && r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
+                            ?? throw new InvalidOperationException("No renderer with a _Color material.");
+        Color32 c = renderer.sharedMaterial.color;
+        return $"#{c.r:X2}{c.g:X2}{c.b:X2}";
+    }
+
+    /// <summary>{ prefab, color } — whether that prefab's first material colour is exactly #RRGGBB.</summary>
+    [TestHook("omniconfig.tintIs")]
+    internal static object? TintIs(Dictionary<string, object?> args) =>
+        string.Equals((string)Tint(args)!, Require(args, "color"), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>{ item } — the recipe that makes this item, as "station level amount: Item xN, ..." ("" when there is none).</summary>
+    [TestHook("omniconfig.recipe")]
+    internal static object? RecipeFor(Dictionary<string, object?> args)
+    {
+        string id = Require(args, "item");
+        Recipe? r = ObjectDB.instance.m_recipes.FirstOrDefault(x => x != null && x.m_item != null && x.m_item.name == id);
+        if (r == null)
+        {
+            return "";
+        }
+
+        string station = r.m_craftingStation != null ? NodeValues.PrefabName(r.m_craftingStation.gameObject) : "hand";
+        return $"{station} {r.m_minStationLevel} {r.m_amount}: " + string.Join(", ", r.m_resources.Select(q => $"{q.m_resItem.name} x{q.m_amount}"));
+    }
+
     /// <summary>{ item } — how many the player carries.</summary>
     [TestHook("omniconfig.count")]
     internal static object? Count(Dictionary<string, object?> args)
@@ -223,6 +334,152 @@ internal static class NodeTestHooks
         }
 
         return DialogService.Renderer;
+    }
+
+
+    /// <summary>{ target } — kills the nearest creature with that prefab within 30 m through Character.Damage (a real hit by the player).</summary>
+    [TestHook("omniconfig.kill")]
+    internal static object? Kill(Dictionary<string, object?> args)
+    {
+        Character victim = Nearest(Require(args, "target"));
+        var hit = new HitData();
+        hit.m_damage.m_slash = victim.GetMaxHealth() * 10f;
+        hit.m_point = victim.transform.position;
+        hit.SetAttacker(LocalPlayer());
+        victim.Damage(hit);
+        return true;
+    }
+
+    /// <summary>{ target } — health of the nearest living creature with that prefab (within 30 m) as a percent of max; -1 when none is alive.</summary>
+    [TestHook("omniconfig.healthPct")]
+    internal static object? HealthPct(Dictionary<string, object?> args)
+    {
+        string target = Require(args, "target");
+        Player player = LocalPlayer();
+        Character? c = Character.GetAllCharacters()
+            .Where(x => x != null && x != player && !x.IsDead() && NodeValues.PrefabName(x.gameObject).Equals(target, StringComparison.OrdinalIgnoreCase)
+                        && Vector3.Distance(x.transform.position, player.transform.position) < 30f)
+            .OrderBy(x => Vector3.Distance(x.transform.position, player.transform.position)).FirstOrDefault();
+        return c == null ? -1 : Mathf.RoundToInt(100f * c.GetHealth() / Mathf.Max(0.001f, c.GetMaxHealth()));
+    }
+
+    /// <summary>{ target, percent } — takes that percent of max health off the nearest creature, with no attacker (so no rule sees it).</summary>
+    [TestHook("omniconfig.hurt")]
+    internal static object? Hurt(Dictionary<string, object?> args)
+    {
+        Character victim = Nearest(Require(args, "target"));
+        victim.SetHealth(victim.GetMaxHealth() * (1f - Convert.ToSingle(Require(args, "percent"), CultureInfo.InvariantCulture) / 100f));
+        return true;
+    }
+
+    /// <summary>{ set? } — the player's health as a percent of max; "set" changes it first.</summary>
+    [TestHook("omniconfig.playerHealth")]
+    internal static object? PlayerHealth(Dictionary<string, object?> args)
+    {
+        Player player = LocalPlayer();
+        if (args.TryGetValue("set", out object? set) && set != null)
+        {
+            player.SetHealth(player.GetMaxHealth() * Convert.ToSingle(set, CultureInfo.InvariantCulture) / 100f);
+        }
+
+        return Mathf.RoundToInt(100f * player.GetHealth() / Mathf.Max(0.001f, player.GetMaxHealth()));
+    }
+
+    /// <summary>{ piece, float? } — places that piece 3 m in front of the camera through Player.PlacePiece (so the place trigger fires). "float": true keeps it from collapsing in mid-air. Returns the piece's prefab name.</summary>
+    [TestHook("omniconfig.place")]
+    internal static object? Place(Dictionary<string, object?> args)
+    {
+        GameObject go = PiecePrefab(Require(args, "piece"));
+        Transform cam = GameCamera.instance != null ? GameCamera.instance.transform : LocalPlayer().transform;
+        System.Reflection.MethodInfo m = HarmonyLib.AccessTools.Method(typeof(Player), "PlacePiece");
+        System.Reflection.ParameterInfo[] ps = m.GetParameters();
+        var call = new object?[ps.Length];
+        call[0] = go.GetComponent<Piece>();
+        call[1] = cam.position + cam.forward * 3f;
+        call[2] = Quaternion.identity;
+        for (int i = 3; i < ps.Length; i++)
+        {
+            call[i] = false;
+        }
+
+        m.Invoke(LocalPlayer(), call);
+        if (Arg(args, "float").Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            // a piece hanging in mid-air would be collapsed by the structural-support check before a test can use it
+            var spot = (Vector3)call[1]!;
+            Piece? placed = Object.FindObjectsOfType<Piece>().Where(p => p.name.StartsWith(go.name, StringComparison.Ordinal))
+                .OrderBy(p => Vector3.Distance(p.transform.position, spot)).FirstOrDefault();
+            WearNTear? support = placed != null ? placed.GetComponent<WearNTear>() : null;
+            if (support != null)
+            {
+                Object.Destroy(support);
+            }
+        }
+
+        return go.name;
+    }
+
+    /// <summary>{ piece } — places a piece 3 m ahead of the camera and removes it with the hammer's remove in the same frame (the test camera drifts between frames).</summary>
+    [TestHook("omniconfig.placeRemove")]
+    internal static object? PlaceRemove(Dictionary<string, object?> args)
+    {
+        Place(new Dictionary<string, object?> { ["piece"] = Require(args, "piece"), ["float"] = true });
+        HarmonyLib.AccessTools.Method(AccessTools_Type("UnityEngine.Physics"), "SyncTransforms").Invoke(null, null);
+        return RemoveAhead(args);
+    }
+
+    private static Type AccessTools_Type(string name) => HarmonyLib.AccessTools.TypeByName(name) ?? throw new InvalidOperationException($"no type {name}.");
+
+    /// <summary>Takes the piece in front of the camera away through Player.RemovePiece, the hammer's remove. Returns whether the game removed it.</summary>
+    [TestHook("omniconfig.removeAhead")]
+    internal static object? RemoveAhead(Dictionary<string, object?> args)
+    {
+        Player player = LocalPlayer();
+        Transform cam = GameCamera.instance != null ? GameCamera.instance.transform : player.transform;
+        var mask = (int)HarmonyLib.AccessTools.Field(typeof(Player), "m_removeRayMask").GetValue(player);
+        Piece? ahead = DrakesOmniConfig.Engine.Node.Library.WorldTriggers.RayPiece(cam.position, cam.forward, mask, player.transform.position + Vector3.up, 50f, out string diag);
+        object? removed = HarmonyLib.AccessTools.Method(typeof(Player), "RemovePiece").Invoke(player, Array.Empty<object>());
+        if (removed is not true)
+        {
+            string near = string.Join("; ", Object.FindObjectsOfType<Piece>()
+                .Where(p => Vector3.Distance(p.transform.position, cam.position) < 8f)
+                .Select(p => $"{p.name} layer {p.gameObject.layer} at {Vector3.Distance(p.transform.position, cam.position):0.0} m, {p.GetComponentsInChildren<Component>().Count(c => c != null && c.GetType().Name.EndsWith("Collider", StringComparison.Ordinal))} collider(s)"));
+            throw new InvalidOperationException($"the game did not remove it (pieces within 8 m of the camera: [{near}]; mask {mask}; ray: {diag}; piece {(ahead != null ? ahead.name : "none")}; camera at {cam.position}, looking {cam.forward}, player at {player.transform.position}).");
+        }
+
+        return true;
+    }
+
+    /// <summary>{ piece } — places a copy 3 m in front of the player and presses use on it through Player.Interact.</summary>
+    [TestHook("omniconfig.interact")]
+    internal static object? Interact(Dictionary<string, object?> args)
+    {
+        Player player = LocalPlayer();
+        GameObject go = Object.Instantiate(PiecePrefab(Require(args, "piece")), player.transform.position + player.transform.forward * 3f, Quaternion.identity);
+        HarmonyLib.AccessTools.Method(typeof(Player), "Interact").Invoke(player, new object[] { go, false, false });
+        return true;
+    }
+
+    /// <summary>Makes the next poll see a biome change, as if the player had just walked in from somewhere else.</summary>
+    [TestHook("omniconfig.biomeChange")]
+    internal static object? BiomeChange(Dictionary<string, object?> args)
+    {
+        Heightmap.Biome now = LocalPlayer().GetCurrentBiome();
+        DrakesOmniConfig.Engine.Node.Library.WorldWatch.ForgetBiome(now == Heightmap.Biome.Ocean ? Heightmap.Biome.Meadows : Heightmap.Biome.Ocean);
+        return now.ToString();
+    }
+
+    private static GameObject PiecePrefab(string name) =>
+        ZNetScene.instance.GetPrefab(name) is { } go && go.GetComponent<Piece>() != null ? go : throw new InvalidOperationException($"'{name}' is not a piece prefab.");
+
+    private static Character Nearest(string target)
+    {
+        Player player = LocalPlayer();
+        return Character.GetAllCharacters()
+                   .Where(c => c != player && !c.IsDead() && NodeValues.PrefabName(c.gameObject).Equals(target, StringComparison.OrdinalIgnoreCase)
+                                && Vector3.Distance(c.transform.position, player.transform.position) < 30f)
+                   .OrderBy(c => Vector3.Distance(c.transform.position, player.transform.position)).FirstOrDefault()
+               ?? throw new InvalidOperationException($"No '{target}' within 30 m.");
     }
 
     private static Player LocalPlayer() => Player.m_localPlayer ?? throw new InvalidOperationException("No local player.");

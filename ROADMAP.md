@@ -1,6 +1,6 @@
 # DrakesOmniConfig — build roadmap
 
-Five phases, in order (plus Phase F, planned). Each ends with a concrete checkpoint you can verify in-game. Owner tags:
+Five phases, in order (plus Phase F, planned, and Phase G, performance). Each ends with a concrete checkpoint you can verify in-game. Owner tags:
 **[You]** needs your hands, your game knowledge, or a design call only you should make.
 **[Prompt]** well-specified enough to hand to a future Claude session as-is.
 **[You→Prompt]** you decide the shape/spec, then it's delegatable.
@@ -121,7 +121,14 @@ Goal: authoring conveniences and the node-based system. No urgency — revisit w
   - Server build: `ConfigBuilder/rules.html` visual editor (palette from `NodeCatalog.json`, built-in snapshot via `Server/Tools/build_rules_page.py`), F10 admin panel (toggle / paste / reload), builder pages embedded in the DLL and written out at startup (they never shipped before).
   - Tests: `Tests/suites/DrakesOmniConfig-Nodes` (22 tests: every trigger through the real game method, conditions/else, cooldown, both popup renderers, durability, both break paths, status, admin toggle/refuse/panel buttons, example files, catalog, the editor's own export). All 26 DrakesOmniConfig tests green 2026-11-18.
   - `src/Engine/DynamicPatcher/HarmonyHookGen.cs` (hooking arbitrary game methods from a modlet) is still a stub: not part of v1.
-- [ ] Node rules, next: more events (kill a creature, place/destroy a piece, enter a biome, interact with a piece), actions on other players / in an area, a server-side rule mode, dataflow values between nodes. Needs your priorities.
+- [x] Node rules phase 2 (2026-11-19): world triggers `kill`/`place`/`destroy`/`interact`/`death`/`biome`, conditions `hasStatus`/`skillLevel`, actions `aoeDamage`/`aoeHeal`/`damageTarget`/`healTarget`, example `nodes/world.yaml`. Compiles in both builds; tested in game 2026-11-19 (suite `DrakesOmniConfig-Nodes` NR-20..NR-29, all green except NR-23). **Open:** NR-23 (`destroy`) — the hammer-remove ray finds the piece, but `Player.RemovePiece` returns false when called from the test even with a hammer equipped, so the `destroy` trigger is unverified in game. `death` has no test.
+- [x] Scripting phase 1 (2026-11-19): `clones:` (new items from existing ones) and the `set` node action. Tests NR-30..NR-34 (set) and NR-40 (Poison Soup), all green in game. Not done: recipes for clones (give/console only), piece clones in the build menu, clones as `Piece`s for non-item fields beyond what overrides reach.
+- [x] Looks bridge (2026-11-23): Forge compiled in (`src/Forge`), `looks/*.json` per modlet, third sync channel
+  (protocol 3), `looks.put/delete`, clone recipes, Items page. Tests NR-40..NR-42. Spike: `docs/spike-assetforge-looks.md`.
+  Open: looks on a client are checked only on the authoritative side in tests (no two-machine run yet); the F10 panel
+  has no "paste a look" box yet (command only); textures/models in synced looks are intentionally unsupported.
+- [x] Benchmark vs WackyDB (2026-11-24): tools in `~/Modding/Vahleim/Tools/bench/`, plan `docs/benchmark-wackydb-plan.md`.
+- [ ] Node rules, still open: a server-side rule mode, dataflow values between nodes, status effects on other players (needs an RPC), destroy by combat (not just the hammer). Needs your priorities.
 - [ ] **[You]** Real two-machine test of sync (client and server on different PCs) — blocked on network access to the remote test server (no route from this PC; port-forward not in place), 2026-11-17.
 
 **Checkpoint:** whenever you're ready — nothing upstream depends on this phase.
@@ -141,3 +148,34 @@ Full hand-off plan (spec, tasks F1–F5, tests, gotchas, open questions):
 
 **Checkpoint:** a dedicated server's modlet changes another mod's setting for every joined player, and an admin
 flag toggle switches it live, with no `.cfg` file edited on any machine.
+
+---
+
+## Phase G — Performance (load time at scale, dedicated servers)
+Goal: hundreds of new items (clones with stats, recipes, looks) load faster and lighter than WackyDB doing the same job,
+for players and on dedicated servers, with no disk cache to go stale. Details, numbers and design:
+`docs/phase-g-performance.md`.
+
+- [x] Benchmark harness and WackyDB baseline (2026-11-24): `~/Modding/Vahleim/Tools/bench/`, plan
+  `docs/benchmark-wackydb-plan.md`. Small (10) and massive (426 items) loadouts, every item verified in game.
+- [x] opt1–opt5 (2026-11-24): Forge batched scene searches and recipe-scan fix, no self-echo re-parse, JSON sync writer,
+  background modlet load at start-up, headless servers skip visual-only looks. 426 items: start-up +3.0 s → +0.7 s
+  (WackyDB +3.4 s), world-entry burst ~1.4 s → ~0.2 s, memory +19 MB (WackyDB +36 MB).
+  - Files: `ModletOrchestrator`, `ModletAuthority`, `ResolvedOverrideSerializer`, `PrefabCloner`, `PrefabPassHook`,
+    `LookBridge`; Forge `InstanceSync`, `ForgeRegistry`
+- [x] opt6 main-menu prebuild (2026-11-24): clones, their number edits and looks built at the menu, reused at world
+  entry when their fingerprint matches; OmniConfig's world pass 150 → 16 ms. Fix: looks on clones lost from the second
+  world load on. Tests NR-00a, NR-43, NR-96; 48 of 49 green (NR-23 as before).
+  - Files: `src/Engine/Hooks/MenuPrebuild.cs` (new), `PrefabCloner`, `PrefabPassHook`, `LookBridge`; Forge `ForgeApi`,
+    `ForgeHost`, `ForgeRegistry`
+- [x] opt6 timing (2026-11-24): 426 items, start-up +0.4 s (WackyDB +3.4 s), world entry +36 ms (WackyDB +49 ms),
+  memory +20 MB (WackyDB +36 MB). Fresh no-mod runs still to do (machine drift).
+- [ ] **[You]** Install Valheim Dedicated Server (Steam app 896660), then: dedicated-server start-up benchmark
+  (launch to ready for players), WackyDB vs OmniConfig, small and massive; verifies the headless look skip.
+- [ ] Joined-client check in game (prebuild reused when the server's set matches, partial rebuild when not); pairs
+  with Phase D's two-machine test.
+- [ ] Forge Runtime release note/version for the three fixes and two additions (owner's go for the version).
+- [ ] Optional: spread the one 58 ms menu looks frame; non-item clones at the menu.
+
+**Checkpoint:** OmniConfig ahead of WackyDB on start-up and memory at both sizes (done for players); dedicated-server
+numbers still to measure.

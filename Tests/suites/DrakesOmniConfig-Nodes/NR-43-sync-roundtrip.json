@@ -1,0 +1,8 @@
+{
+  "name": "NR-43 sync writer: the fast JSON override list reads back the same as the old YAML one",
+  "description": "The authoritative side publishes its resolved overrides as hand-written JSON (JSON is YAML, so clients read it with the same parser). This serialises the live set both ways, reads both back and compares every field. Needs some modlet overrides loaded (Poison Soup's clone has several).",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.syncRoundTrip", "args": {}, "expect": 0, "label": "overrides that differ between the two writers" }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

@@ -1,0 +1,22 @@
+# "configs:" sets another mod's BepInEx setting, by plugin GUID, section and key, with the same value math as
+# overrides ("5", "=5", "*1.5", "+20%", "-5", text, true/false, an enum name). A list, because section and key
+# names may contain ':'.
+#
+# - The mod's .cfg file is never changed: the value lives in memory while the binding is on, and removing it puts
+#   the mod's own value back. Relative edits (*1.5, +20%) start from the mod's own value every time.
+# - On a server, a mod that syncs the setting itself (ServerSync, Jotunn admin-only) sends it to players; for the
+#   rest, OmniConfig sends it.
+# - A mod that reads a setting only when the game starts sees a new value after a relog or restart.
+# - Two modlets binding the same setting: "override: true" wins, then the higher manifest priority.
+configs:
+  # OmniConfig's own log level: every install has this one.
+  - mod: com.drakemods.omniconfig
+    section: General
+    key: MinimumLogLevel
+    value: Warning
+
+  # Another mod (only applied if it is installed; otherwise one warning in the log):
+  # - mod: Azumatt.AzuCraftyBoxes
+  #   section: "1 - General"
+  #   key: "Stack multiplier"
+  #   value: "*2"

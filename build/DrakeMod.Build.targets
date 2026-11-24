@@ -1,4 +1,11 @@
 <Project>
+  <!-- Cross-platform build helpers (python replaces the old PowerShell scripts) -->
+  <PropertyGroup>
+    <DrakePython Condition="'$(DrakePython)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">python</DrakePython>
+    <DrakePython Condition="'$(DrakePython)' == ''">python3</DrakePython>
+    <DrakeBuildPy Condition="'$(DrakeBuildPy)' == '' and Exists('$(MSBuildThisFileDirectory)scripts/drakebuild.py')">$(MSBuildThisFileDirectory)scripts/drakebuild.py</DrakeBuildPy>
+    <DrakeBuildPy Condition="'$(DrakeBuildPy)' == '' and Exists('$(MSBuildProjectDirectory)/../DrakesWorkshop/build/scripts/drakebuild.py')">$(MSBuildProjectDirectory)/../DrakesWorkshop/build/scripts/drakebuild.py</DrakeBuildPy>
+  </PropertyGroup>
   <!-- Do not add a custom MSBuild-refs target here: during Rebuild Solution each consumer would
        invoke a parallel Libs build and VS locks bin\Debug\DrakeModsLibs.dll. ProjectReference
        dependency order is enough for solution and single-.csproj builds. -->
@@ -73,7 +80,7 @@
            Text="ServerSync.dll was deployed to $(GaleModDeployPath). Only DrakeModsLibs may ship ServerSync." />
     <Error Condition="'$(VerifyNoServerSyncScript)' == '' or !Exists('$(VerifyNoServerSyncScript)')"
            Text="Verify-NoServerSyncInModDll.ps1 not found. Run scripts\Sync-ModBuild.ps1 or ensure build\scripts\ exists." />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(VerifyNoServerSyncScript)&quot; -DllPath &quot;$(TargetPath)&quot;"
+    <Exec Command="$(DrakePython) &quot;$(DrakeBuildPy)&quot; verify-serversync -DllPath &quot;$(TargetPath)&quot;"
           Condition="'$(VerifyNoServerSyncScript)' != '' and Exists('$(VerifyNoServerSyncScript)')"
           IgnoreExitCode="false" />
   </Target>
@@ -166,7 +173,7 @@
       <_R2ThunderstoreDeps>@(ThunderstoreDependency, ';')</_R2ThunderstoreDeps>
     </PropertyGroup>
     <WriteLinesToFile File="$(_R2ModDescFile)" Lines="$(Description)" Overwrite="true" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(R2ModProfileModScript)&quot; -ModsYmlPath &quot;$(R2ModsYmlPath)&quot; -AuthorName &quot;$(ThunderstoreAuthor)&quot; -PackageName &quot;$(ThunderstoreName)&quot; -DisplayName &quot;$(BepInPluginName)&quot; -Version &quot;$(Version)&quot; -DescriptionFile &quot;$(_R2ModDescFile)&quot; -WebsiteUrl &quot;$(WebsiteUrl)&quot; -Dependencies &quot;$(_R2ThunderstoreDeps)&quot;"
+    <Exec Command="$(DrakePython) &quot;$(DrakeBuildPy)&quot; update-r2-mod -ModsYmlPath &quot;$(R2ModsYmlPath)&quot; -AuthorName &quot;$(ThunderstoreAuthor)&quot; -PackageName &quot;$(ThunderstoreName)&quot; -DisplayName &quot;$(BepInPluginName)&quot; -Version &quot;$(Version)&quot; -DescriptionFile &quot;$(_R2ModDescFile)&quot; -WebsiteUrl &quot;$(WebsiteUrl)&quot; -Dependencies &quot;$(_R2ThunderstoreDeps)&quot;"
           WorkingDirectory="$(MSBuildProjectDirectory)"
           IgnoreExitCode="false" />
     <Message Importance="high" Text="Synced mods.yml: $(ThunderstoreAuthor)-$(ThunderstoreName) ($(Version))" />
@@ -197,7 +204,7 @@
       <_TestLabGaleRoot Condition="'$(GaleModPath)' != '' and '$(ProfileName)' != ''">$(GaleModPath)\$(ProfileName)</_TestLabGaleRoot>
       <_TestLabR2Root Condition="'$(R2ModPath)' != '' and '$(ProfileName)' != ''">$(R2ModPath)\$(ProfileName)</_TestLabR2Root>
     </PropertyGroup>
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\Deploy-TestLabSuites.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -ProfileRoots &quot;$(_TestLabGaleRoot);$(_TestLabR2Root)&quot;" />
+    <Exec Command="$(DrakePython) &quot;$(DrakeBuildPy)&quot; deploy-suites -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -ProfileRoots &quot;$(_TestLabGaleRoot);$(_TestLabR2Root)&quot;" />
   </Target>
 
 </Project>

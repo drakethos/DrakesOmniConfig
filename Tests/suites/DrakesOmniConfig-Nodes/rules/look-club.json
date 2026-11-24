@@ -1,0 +1,6 @@
+{
+  "id": "Club",
+  "kind": "reskin",
+  "base": "Club",
+  "look": { "materials": [ { "tint": "#C0392B" } ] }
+}

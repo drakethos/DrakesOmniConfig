@@ -1,0 +1,51 @@
+{
+  "name": "CF-02 relative: *2 is measured from the baseline, so two reloads still give x2",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Multiplier"
+      },
+      "expect": "4",
+      "label": "2 * 2"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "admin reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "admin reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Multiplier"
+      },
+      "expect": "4",
+      "label": "still 4 after two reloads"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

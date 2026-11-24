@@ -1,0 +1,119 @@
+{
+  "name": "NR-26 conditions: skillLevel and hasStatus pick do or else",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "KnifeCopper",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "KnifeCopper"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Raspberry"
+      },
+      "expect": 2,
+      "label": "skillLevel min 0 passes"
+    },
+    {
+      "do": "give",
+      "prefab": "ShieldWood",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "ShieldWood"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Blueberries"
+      },
+      "expect": 2,
+      "label": "skillLevel min 500 fails -> else"
+    },
+    {
+      "do": "give",
+      "prefab": "AxeBronze",
+      "count": 1
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "give",
+      "prefab": "MaceBronze",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "MaceBronze"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.hasStatus",
+      "args": {
+        "effect": "Rested"
+      },
+      "expect": true,
+      "label": "the mace rule gave Rested"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "AxeBronze"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.3
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Honey"
+      },
+      "expect": 1,
+      "label": "hasStatus Rested passes"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

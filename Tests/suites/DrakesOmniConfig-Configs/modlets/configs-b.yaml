@@ -1,0 +1,6 @@
+# Test modlet com.test.cfgb (priority 5): wins the Greeting conflict.
+configs:
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Text
+    key: Greeting
+    value: from B

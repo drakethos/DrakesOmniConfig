@@ -1,0 +1,78 @@
+{
+  "name": "NR-31 set on item: equipping the axe sets that item's quality",
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "AxeStone",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.instanceField",
+      "args": {
+        "on": "item",
+        "item": "AxeStone",
+        "field": "m_quality"
+      },
+      "expect": "1",
+      "label": "starts at quality 1"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "AxeStone"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.4
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.instanceField",
+      "args": {
+        "on": "item",
+        "item": "AxeStone",
+        "field": "m_quality"
+      },
+      "expect": "3",
+      "label": "quality set to 3"
+    },
+    {
+      "do": "give",
+      "prefab": "SpearFlint",
+      "count": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.equip",
+      "args": {
+        "item": "SpearFlint"
+      },
+      "expect": true
+    },
+    {
+      "do": "wait",
+      "seconds": 0.4
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.instanceField",
+      "args": {
+        "on": "item",
+        "item": "SpearFlint",
+        "field": "m_durability"
+      },
+      "expect": "25",
+      "label": "=100 then /4 -> durability 25"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

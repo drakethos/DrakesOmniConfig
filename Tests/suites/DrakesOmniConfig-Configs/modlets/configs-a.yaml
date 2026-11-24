@@ -1,0 +1,46 @@
+# Test modlet com.test.cfga (priority 0): one binding of each kind, plus mistakes that must be reported, not crash.
+configs:
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Numbers
+    key: Plain int
+    value: "42"
+  - mod: COM.DrakeMods.OmniConfig.TestTarget      # GUID match is case-insensitive
+    section: Numbers
+    key: Multiplier
+    value: "*2"
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Numbers
+    key: Ranged float
+    value: "99"                                   # allowed 0..10: clamped to 10
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Numbers
+    key: Second int
+    value: "abc"                                  # not a number: rejected, left at 7
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Toggles
+    key: Enabled
+    value: true
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Text
+    key: Mode
+    value: Gamma
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Text
+    key: Greeting
+    value: from A                                 # loses to com.test.cfgb (priority 5)
+  - mod: com.drakemods.omniconfig.testtarget
+    section: "1 - General: extra"
+    key: "Stack: multiplier"
+    value: "+50%"                                 # 3 + 50% = 4.5, an int setting: 5
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Synced
+    key: Server value
+    value: "50"                                   # the mod syncs this one itself
+  - mod: com.nobody.notinstalled
+    section: Anything
+    key: Whatever
+    value: "1"
+  - mod: com.drakemods.omniconfig.testtarget
+    section: Numbers
+    key: No such key
+    value: "1"

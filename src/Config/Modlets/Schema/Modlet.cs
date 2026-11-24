@@ -12,6 +12,9 @@ internal sealed class Modlet
     public ModletManifest Manifest { get; set; } = new();
     public List<ModletOverride> Overrides { get; set; } = new();
 
+    /// <summary><c>configs:</c> entries from any of this modlet's YAML files: other mods' BepInEx settings.</summary>
+    public List<ConfigBinding> ConfigBindings { get; set; } = new();
+
     /// <summary>
     /// Named values from this modlet's variables file (quick-edit, e.g. vars.yaml) — substituted for
     /// "{name}" placeholders in any of this modlet's other YAML files before FieldValueExpression parsing.
@@ -31,4 +34,7 @@ internal sealed class Modlet
     /// without parsing them, so an existing modlet folder doesn't need restructuring once Wave 2 lands.
     /// </summary>
     public List<string> NodeScriptPaths { get; set; } = new();
+
+    /// <summary>looks/*.json: Forge recipes (file name -> JSON) for recolours/reskins, built by the embedded Forge and synced as text.</summary>
+    public Dictionary<string, string> Looks { get; set; } = new();
 }

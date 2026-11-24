@@ -1,0 +1,31 @@
+{
+  "name": "NR-22 place: placing a wood floor runs the place rule",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.place",
+      "args": {
+        "piece": "wood_floor"
+      }
+    },
+    {
+      "do": "wait",
+      "seconds": 0.5
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Resin"
+      },
+      "expect": 2,
+      "label": "Resin x2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

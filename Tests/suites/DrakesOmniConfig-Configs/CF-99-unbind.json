@@ -1,0 +1,111 @@
+{
+  "name": "CF-99 unbind: removing a binding puts the mod's own value back",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.removeModlet",
+      "args": {
+        "modlet": "com.test.cfgb"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "admin reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "from A",
+      "label": "the remaining modlet's binding now wins"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.removeModlet",
+      "args": {
+        "modlet": "com.test.cfga"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "reload"
+      },
+      "expect": true,
+      "label": "admin reload"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "10",
+      "label": "back to 10"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Multiplier"
+      },
+      "expect": "2",
+      "label": "back to 2"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "hello",
+      "label": "back to hello"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Synced",
+        "key": "Server value"
+      },
+      "expect": "5",
+      "label": "back to 5"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "1 - General: extra",
+        "key": "Stack: multiplier"
+      },
+      "expect": "3",
+      "label": "back to 3"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

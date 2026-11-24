@@ -1,0 +1,87 @@
+{
+  "name": "CF-01 set: a bound entry has the modlet's value in memory, the .cfg file keeps the mod's own",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "42",
+      "label": "value in memory"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int",
+        "disk": true
+      },
+      "expect": "10",
+      "label": "what a save would write (the baseline)"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgSave",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget"
+      },
+      "expect": true,
+      "label": "the mod's file is saved (like a config manager)"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfgFile",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Numbers",
+        "key": "Plain int"
+      },
+      "expect": "10",
+      "label": "the file on disk still has 10"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Toggles",
+        "key": "Enabled"
+      },
+      "expect": "true",
+      "label": "bool"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Mode"
+      },
+      "expect": "Gamma",
+      "label": "enum"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "1 - General: extra",
+        "key": "Stack: multiplier"
+      },
+      "expect": "5",
+      "label": "section/key with ':' and +50% rounded for an int"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

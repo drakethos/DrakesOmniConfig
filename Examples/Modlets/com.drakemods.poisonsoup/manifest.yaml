@@ -1,0 +1,6 @@
+# Poison Soup: a brand-new item cloned from Serpent Stew (same model and icon), changed in YAML only.
+# Enabled here so it is ready to play with in a test profile; it only exists while this modlet is on.
+schemaVersion: 1
+displayName: Poison Soup
+enabled: true
+priority: 0

@@ -1,0 +1,38 @@
+{
+  "name": "NR-25 biome: a biome change runs the unfiltered rule, not the DeepNorth one",
+  "description": "Starting in the test world's own biome, so only the any-change rule may fire.",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.biomeChange"
+    },
+    {
+      "do": "wait",
+      "seconds": 1
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "BoneFragments"
+      },
+      "expect": 2,
+      "label": "BoneFragments x2 (any-change rule)"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.count",
+      "args": {
+        "item": "Honey"
+      },
+      "expect": 0,
+      "label": "Honey x0 (DeepNorth-only rule stayed quiet)"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}

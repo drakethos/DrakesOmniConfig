@@ -1,0 +1,73 @@
+{
+  "name": "CF-F2-02 flag on: a conditional variable switches value at once, and the flag becomes a world global key",
+  "steps": [
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "event_weekend",
+        "payload": "on"
+      },
+      "expect": true,
+      "label": "flag.set event_weekend on"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "weekend",
+      "label": "when: event_weekend picked"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.globalKey",
+      "args": {
+        "key": "omni_flag_event_weekend"
+      },
+      "expect": true,
+      "label": "omni_flag_event_weekend set"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.admin",
+      "args": {
+        "command": "flag.set",
+        "arg": "event_weekend",
+        "payload": "off"
+      },
+      "expect": true,
+      "label": "flag.set event_weekend off"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.cfg",
+      "args": {
+        "mod": "com.drakemods.omniconfig.testtarget",
+        "section": "Text",
+        "key": "Greeting"
+      },
+      "expect": "plain",
+      "label": "back to the default"
+    },
+    {
+      "do": "hook",
+      "name": "omniconfig.globalKey",
+      "args": {
+        "key": "omni_flag_event_weekend"
+      },
+      "expect": false,
+      "label": "key removed"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "DrakesOmniConfig"
+    }
+  ]
+}
