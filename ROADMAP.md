@@ -1,6 +1,6 @@
 # DrakesOmniConfig — build roadmap
 
-Five phases, in order. Each ends with a concrete checkpoint you can verify in-game. Owner tags:
+Five phases, in order (plus Phase F, planned). Each ends with a concrete checkpoint you can verify in-game. Owner tags:
 **[You]** needs your hands, your game knowledge, or a design call only you should make.
 **[Prompt]** well-specified enough to hand to a future Claude session as-is.
 **[You→Prompt]** you decide the shape/spec, then it's delegatable.
@@ -125,3 +125,19 @@ Goal: authoring conveniences and the node-based system. No urgency — revisit w
 - [ ] **[You]** Real two-machine test of sync (client and server on different PCs) — blocked on network access to the remote test server (no route from this PC; port-forward not in place), 2026-11-17.
 
 **Checkpoint:** whenever you're ready — nothing upstream depends on this phase.
+
+---
+
+## Phase F — Other mods' configs, shared variables, server flags
+Goal: OmniConfig becomes the one place to tune a modded server. Modlets set any other mod's BepInEx config
+entry (`configs:`), share variables across modlets, and react to admin-switched server flags (conditional
+variables, flag-gated modlets, flags mirrored to vanilla global keys for zero-dependency integration). No new
+sync system: values reach players through each mod's own sync, or through OmniConfig's existing channel.
+
+Full hand-off plan (spec, tasks F1–F5, tests, gotchas, open questions):
+**[docs/plans/PHASE-F-mod-configs-and-flags.md](docs/plans/PHASE-F-mod-configs-and-flags.md)**
+
+- [ ] F1 configs core · [ ] F2 shared vars, flags, conditions · [ ] F3 admin control · [ ] F4 authoring tools · [ ] F5 docs
+
+**Checkpoint:** a dedicated server's modlet changes another mod's setting for every joined player, and an admin
+flag toggle switches it live, with no `.cfg` file edited on any machine.
