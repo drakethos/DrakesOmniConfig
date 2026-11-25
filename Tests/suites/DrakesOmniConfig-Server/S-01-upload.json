@@ -1,0 +1,13 @@
+{
+  "name": "S-01 upload: Player 1's admin rules.put is saved by the server and reaches both clients",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rules.put", "file": "DrakesOmniConfig-Server/rules/mp-tests.yaml" } },
+    { "do": "wait", "seconds": 3 },
+    { "do": "hook", "name": "omniconfig.lastReply", "contains": "Saved 2 rule(s)", "label": "server accepted the upload" },
+    { "do": "agree", "timeout": 20, "expect": "2", "equal": true, "label": "2 rules active on Player 1 and Player 2", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } } ] },
+    { "do": "check", "check": "logcontains", "source": "DrakesOmniConfig", "text": "rule(s) from the server", "label": "Player 1 got them over the sync channel" }
+  ],
+  "asserts": [ { "check": "noErrors", "source": "DrakesOmniConfig" } ]
+}

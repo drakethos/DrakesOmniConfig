@@ -1,4 +1,7 @@
+using System;
+using System.Reflection;
 using System.Linq;
+using DrakesOmniConfig.Config.Settings;
 using DrakesOmniConfig.Engine.Node.Admin;
 using HarmonyLib;
 
@@ -51,7 +54,7 @@ internal static class OmniConfigConsoleCommands
             };
         }
 
-        _ = new Terminal.ConsoleCommand("omni", "OmniConfig admin: " + Usage, args =>
+        AddCommand("omni", "OmniConfig admin: " + Usage, args =>
         {
             string[] words = args.Args.Skip(1).ToArray();
             if (words.Length == 0)
@@ -95,5 +98,36 @@ internal static class OmniConfigConsoleCommands
             _waiting = args.Context;
             AdminChannel.Send(command, arg, payload);
         });
+    }
+
+    /// <summary>
+    /// Creates a Terminal.ConsoleCommand through whichever (string, string, ConsoleEvent, ...) constructor the running game
+    /// has, the rest at their defaults. The constructor's optional bools change between game versions (the stub refs have
+    /// one fewer than live Valheim), so a direct "new" compiles fine and throws MissingMethodException in game.
+    /// </summary>
+    private static void AddCommand(string name, string description, Terminal.ConsoleEvent action)
+    {
+        foreach (ConstructorInfo ctor in typeof(Terminal.ConsoleCommand).GetConstructors())
+        {
+            ParameterInfo[] ps = ctor.GetParameters();
+            if (ps.Length < 3 || ps[0].ParameterType != typeof(string) || ps[1].ParameterType != typeof(string) || ps[2].ParameterType != typeof(Terminal.ConsoleEvent))
+            {
+                continue;
+            }
+
+            object?[] values = new object?[ps.Length];
+            values[0] = name;
+            values[1] = description;
+            values[2] = action;
+            for (int i = 3; i < ps.Length; i++)
+            {
+                values[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue : ps[i].ParameterType.IsValueType ? Activator.CreateInstance(ps[i].ParameterType) : null;
+            }
+
+            ctor.Invoke(values);
+            return;
+        }
+
+        ModLog.Warning($"Console command '{name}' not registered: this game has no Terminal.ConsoleCommand(string, string, ConsoleEvent, ...) constructor.");
     }
 }

@@ -1,0 +1,11 @@
+{
+  "name": "S-04 Player 2 is not an admin: its rules.put is refused and changes nothing",
+  "steps": [
+    { "do": "hook", "on": "player2", "name": "omniconfig.admin", "args": { "command": "rules.put", "payload": "modlet: com.drakemods.mpintruder\nfile: intruder\nrules:\n  - id: free-stuff\n    when: { event: equip, item: Club }\n    do:\n      - give: { item: Coins, amount: 999 }\n" } },
+    { "do": "wait", "seconds": 3 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.lastReply", "contains": "not an admin", "label": "the server refused Player 2" },
+    { "do": "agree", "timeout": 10, "expect": "0", "equal": true, "label": "no intruder rules anywhere", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mpintruder" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mpintruder" } } ] }
+  ]
+}

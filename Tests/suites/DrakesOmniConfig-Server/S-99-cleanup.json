@@ -1,0 +1,10 @@
+{
+  "name": "S-99 cleanup: rules deleted on the server, gone from both clients, admin right removed",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rules.delete", "arg": "com.drakemods.mptest/mp-tests" } },
+    { "do": "agree", "timeout": 20, "expect": "0", "equal": true, "label": "0 test rules on both clients", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } } ] },
+    { "do": "server", "cmd": "admin.remove", "args": { "who": "me" } }
+  ]
+}

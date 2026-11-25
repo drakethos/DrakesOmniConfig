@@ -1,0 +1,19 @@
+{
+  "name": "S-03 rule.toggle from Player 1 turns the rule off on Player 2, then back on",
+  "steps": [
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rule.toggle", "arg": "com.drakemods.mptest/equip-gives" } },
+    { "do": "wait", "seconds": 2 },
+    { "do": "hook", "name": "omniconfig.lastReply", "contains": "off", "label": "server turned it off" },
+    { "do": "agree", "timeout": 20, "expect": "1", "equal": true, "label": "1 rule active on both clients", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } } ] },
+    { "do": "hook", "on": "player2", "name": "omniconfig.equip", "args": { "item": "FishingRod" }, "expect": true },
+    { "do": "wait", "seconds": 1 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.count", "args": { "item": "Thunderstone" }, "expect": 2, "label": "rule off: Player 2 still has only the first 2" },
+    { "do": "hook", "on": "player2", "name": "omniconfig.unequip", "args": { "item": "FishingRod" } },
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rule.toggle", "arg": "com.drakemods.mptest/equip-gives" } },
+    { "do": "agree", "timeout": 20, "expect": "2", "equal": true, "label": "both rules active again on both clients", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } } ] }
+  ]
+}

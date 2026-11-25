@@ -1,0 +1,13 @@
+{
+  "name": "S-00 setup: Player 2 answers and Player 1 is made a server admin",
+  "steps": [
+    { "do": "ping", "on": "player2", "connectTimeout": 120, "timeout": 20, "label": "Player 2 is connected" },
+    { "do": "server", "cmd": "admin.add", "args": { "who": "me" } },
+    { "do": "wait", "seconds": 2 },
+    { "do": "hook", "name": "omniconfig.admin", "args": { "command": "rules.delete", "arg": "com.drakemods.mptest/mp-tests" } },
+    { "do": "wait", "seconds": 2 },
+    { "do": "agree", "timeout": 15, "expect": "0", "equal": true, "label": "no leftover test rules anywhere", "reads": [
+      { "party": "player1", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } },
+      { "party": "player2", "hook": "omniconfig.rules", "args": { "modlet": "com.drakemods.mptest" } } ] }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "S-02 Player 2 equips the trigger item and the synced rule gives on Player 2's character",
+  "steps": [
+    { "do": "give", "on": "player2", "prefab": "FishingRod", "count": 1 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.equip", "args": { "item": "FishingRod" }, "expect": true },
+    { "do": "wait", "seconds": 1 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.count", "args": { "item": "Thunderstone" }, "expect": 2, "label": "Player 2 got 2 Thunderstone" },
+    { "do": "hook", "on": "player2", "name": "omniconfig.unequip", "args": { "item": "FishingRod" } },
+    { "do": "give", "on": "player2", "prefab": "Pukeberries", "count": 1 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.consume", "args": { "item": "Pukeberries" }, "expect": true },
+    { "do": "wait", "seconds": 1 },
+    { "do": "hook", "on": "player2", "name": "omniconfig.count", "args": { "item": "Ooze" }, "expect": 4, "label": "Player 2 got 4 Ooze" }
+  ]
+}

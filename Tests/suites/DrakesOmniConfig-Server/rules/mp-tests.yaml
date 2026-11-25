@@ -1,0 +1,13 @@
+# Uploaded by S-01 (admin rules.put from Player 1), deleted by S-99. Deterministic: no chance rolls.
+modlet: com.drakemods.mptest
+file: mp-tests
+rules:
+  - id: equip-gives
+    when: { event: equip, item: FishingRod }
+    do:
+      - give: { item: Thunderstone, amount: 2 }
+
+  - id: consume-gives
+    when: { event: consume, item: Pukeberries }
+    do:
+      - give: { item: Ooze, amount: 4 }

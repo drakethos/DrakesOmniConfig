@@ -1,0 +1,15 @@
+// OmniConfig on a real dedicated server with two real clients. Needs TestLab server connect mode: this game as Player 1,
+// a second lab client as Player 2, DrakesTestLabServer with [Control] Enabled = true, DrakesOmniConfigServer on the
+// server and DrakesOmniConfig (client) on both players. The admin channel is asynchronous on a client, so results are
+// read back (rule counts through "agree", the server's reply through omniconfig.lastReply), never from the send hook.
+{
+  "name": "DrakesOmniConfig-Server",
+  "description": "Admin rules upload from Player 1 through the dedicated server's OmniConfigServer, published over ServerSync to both clients; Player 2 fires a rule on its own character; a non-admin upload from Player 2 is refused; S-99 removes the rules and the admin right.",
+  "requireMods": [
+    { "guid": "com.drakemods.testlab", "minVersion": "0.4.2" },
+    { "guid": "com.drakemods.omniconfig", "minVersion": "0.1.0" }
+  ],
+  "setup": { "god": 1 },
+  // the server owns the world: never reset or reload it between tests
+  "resetBetweenTests": false
+}
